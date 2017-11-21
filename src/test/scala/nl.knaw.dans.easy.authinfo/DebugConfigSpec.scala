@@ -15,10 +15,10 @@
  */
 package nl.knaw.dans.easy.authinfo
 
-import java.nio.file.{Files, Paths}
+import java.nio.file.{ Files, Paths }
 
 import org.apache.commons.configuration.PropertiesConfiguration
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.collection.JavaConverters._
 

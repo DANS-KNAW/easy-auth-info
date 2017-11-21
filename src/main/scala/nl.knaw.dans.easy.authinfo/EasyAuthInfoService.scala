@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.authinfo
 import javax.servlet.ServletContext
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.eclipse.jetty.ajp.Ajp13SocketConnector
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.scalatra._
@@ -27,6 +26,7 @@ import org.scalatra.servlet.ScalatraListener
 import scala.util.Try
 
 class EasyAuthInfoService(serverPort: Int, app: EasyAuthInfoApp) extends DebugEnhancedLogging {
+
   import logger._
 
   private val server = new Server(serverPort)
@@ -41,7 +41,7 @@ class EasyAuthInfoService(serverPort: Int, app: EasyAuthInfoApp) extends DebugEn
     }
   })
   server.setHandler(context)
-  info(s"HTTP port is ${serverPort}")
+  info(s"HTTP port is ${ serverPort }")
 
   def start(): Try[Unit] = Try {
     info("Starting service...")

@@ -15,13 +15,16 @@
  */
 package nl.knaw.dans.easy.authinfo
 
+import java.io.FileNotFoundException
+
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.json4s.native.JsonMethods.{ pretty, render }
 import resource._
 
 import scala.language.reflectiveCalls
 import scala.util.control.NonFatal
-import scala.util.{ Failure, Try }
+import scala.util.{ Failure, Success, Try }
 
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
@@ -46,9 +49,11 @@ object Command extends App with DebugEnhancedLogging {
   private def runSubcommand(app: EasyAuthInfoApp): Try[FeedBackMessage] = {
     commandLine.subcommand
       .collect {
-//      case subcommand1 @ subcommand.subcommand1 => // handle subcommand1
-//      case None => // handle command line without subcommands
         case commandLine.runService => runAsService(app)
+        case file @ commandLine.file => app.rightsOf(file.bagUuid(), file.filePath()).flatMap {
+          case Some(f) => Success(pretty(render(f)))
+          case None => Failure(new FileNotFoundException(s"${ file.bagUuid() }/${ file.filePath() }"))
+        }
       }
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
   }

@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.authinfo
 
-import java.nio.file.{ Files, Path, Paths }
+import java.nio.file.{ Files, Paths }
 
 import org.apache.commons.configuration.PropertiesConfiguration
 import resource.managed

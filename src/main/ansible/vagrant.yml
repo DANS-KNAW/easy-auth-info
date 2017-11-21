@@ -16,10 +16,54 @@
 
 - hosts: "test"
   become: yes
+  vars:
+    local_test_vm_base_backend_port: 20170
   roles:
     - dans.local-test-vm-base
     - dans.local-yum-repo
 
+########### bag store
+
+- hosts: "test"
+  vars:
+    dans_config_base: "/etc/opt/dans.knaw.nl"
+    stores_dir: "/data/bag-stores"
+    bag_stores:
+      - { name: "pdbs",      base_dir: "{{ stores_dir }}/pdbs" }
+      - { name: "easy",      base_dir: "{{ stores_dir }}/easy" }
+      - { name: "pan",       base_dir: "{{ stores_dir }}/pan" }
+  become: yes
+  tasks:
+
+  - name: Installing bag-store package
+    yum:
+      name: "dans.knaw.nl-easy-bag-store"
+      state: latest
+      # TODO latest -> snapshot
+
+  - name: Configure bag stores
+    lineinfile:
+        dest: "{{ dans_config_base }}/easy-bag-store/stores.properties"
+        line: "{{ item.name }}={{ item.base_dir }}"
+    with_items: "{{ bag_stores }}"
+
+  - name: Create empty bag-store base directories
+    file:
+      path: "{{ stores_dir }}/{{ item.name }}"
+      state: "directory"
+      owner: "easy-bag-store"
+      group: "easy-bag-store"
+      mode: "0775"
+    with_items: "{{ bag_stores }}"
+
+  - service:
+      name: "easy-bag-store"
+      state: restarted
+      enabled: yes
+
+########### the intended service
+
+# TODO fix the need for 'yum upgrade' and 'service restart' after re-build and 'vagrant provision'
 - hosts: "test"
   become: yes
   tasks:

@@ -15,7 +15,10 @@
  */
 package nl.knaw.dans.easy.authinfo
 
-import org.rogach.scallop.{ScallopConf, ScallopOption, Subcommand, singleArgConverter}
+import java.nio.file.Path
+import java.util.UUID
+
+import org.rogach.scallop.{ ScallopConf, ScallopOption, Subcommand, ValueConverter, singleArgConverter }
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true
@@ -26,8 +29,8 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Provides consolidated authorization info about items in a bag store."""
   val synopsis: String =
     s"""
-       |  $printedName (synopsis of command line parameters)
-       |  $printedName (... possibly multiple lines for subcommands)""".stripMargin
+       |  $printedName file <UUID> <path>
+       |  $printedName run-service""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
   banner(
@@ -40,13 +43,24 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |
        |Options:
        |""".stripMargin)
-  //val url = opt[String]("someOption", noshort = true, descr = "Description of the option", default = app.someProperty)
 
-  val runService = new Subcommand("run-service") {
+  private implicit def bagId: ValueConverter[UUID] = {
+    singleArgConverter(s => UUID.fromString(s))
+  }
+
+  val file = new Subcommand("file") {
+    descr("get accessibility of a file")
+    val bagUuid: ScallopOption[UUID] = trailArg[UUID](name = "bag-uuid", required = true)
+    val filePath: ScallopOption[Path] = trailArg[Path](name = "file-path", required = true)
+    footer(SUBCOMMAND_SEPARATOR)
+  }
+
+  val runService: Subcommand = new Subcommand("run-service") {
     descr(
       "Starts EASY Auth Info as a daemon that services HTTP requests")
     footer(SUBCOMMAND_SEPARATOR)
   }
+  addSubcommand(file)
   addSubcommand(runService)
 
   footer("")

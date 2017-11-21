@@ -15,11 +15,13 @@
  */
 package nl.knaw.dans.easy
 
-import java.nio.file.Paths
-
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
+import scalaj.http.HttpResponse
 
 package object authinfo {
+
+  case class HttpStatusException(msg: String, response: HttpResponse[String])
+    extends Exception(s"$msg - ${ response.statusLine }, details: ${ response.body }")
 
   implicit class TryExtensions2[T](val t: Try[T]) extends AnyVal {
     // TODO candidate for dans-scala-lib

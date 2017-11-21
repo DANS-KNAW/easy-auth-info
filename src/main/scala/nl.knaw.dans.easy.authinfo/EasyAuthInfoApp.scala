@@ -15,12 +15,25 @@
  */
 package nl.knaw.dans.easy.authinfo
 
-import scala.util.{ Try, Success }
+import java.nio.file.Path
+import java.util.UUID
 
-class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable {
+import nl.knaw.dans.easy.authinfo.components.FileItems
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.json4s.JsonAST.{ JString, JValue }
+
+import scala.util.{ Failure, Success, Try }
+
+class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with DebugEnhancedLogging {
 
 
-  // The application's API here. This is what is used by driver or entry-point objects.
+  def rightsOf(bagId: UUID, path: Path): Try[Option[JValue]] = {
+    for {
+      ddm <- wiring.loadDDM(bagId) // TODO read lazily
+      filesXml <- wiring.loadFilesXML(bagId)
+      rights <- FileItems(ddm, filesXml).rightsOf(path)
+    } yield rights
+  }
 
   def init(): Try[Unit] = {
     // Do any initialization of the application here. Typical examples are opening

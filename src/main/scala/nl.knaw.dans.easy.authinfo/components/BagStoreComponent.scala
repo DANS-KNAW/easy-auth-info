@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package nl.knaw.dans.easy.authinfo
+package nl.knaw.dans.easy.authinfo.components
 
-import java.net.URI
+import java.nio.file.{ Path, Paths }
+import java.util.UUID
 
-import nl.knaw.dans.easy.authinfo.components.HttpBagStoreComponent
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import scala.util.Try
+import scala.xml.Elem
 
-/**
- * Initializes and wires together the components of this application.
- *
- * @param configuration the application configuration
- */
-class ApplicationWiring(configuration: Configuration) extends DebugEnhancedLogging
-  with HttpBagStoreComponent {
+trait BagStoreComponent {
+  val bagStore: BagStore
 
-  override val bagStore: BagStore = new HttpBagStore {
-    override val baseUri: URI = new URI(configuration.properties.getString("bag-store.url"))
+  def loadDDM(bagId: UUID): Try[Elem] = {
+    bagStore.loadXML(bagId, Paths.get("metadata/dataset.xml"))
+  }
+
+  def loadFilesXML(bagId: UUID): Try[Elem] = {
+    bagStore.loadXML(bagId, Paths.get("metadata/files.xml"))
+  }
+
+  trait BagStore {
+    def loadXML(bagId: UUID, path: Path): Try[Elem]
   }
 }
