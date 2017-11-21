@@ -24,7 +24,7 @@ import org.json4s.JsonDSL._
 import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, Node }
 
-case class FileItems(ddm: Elem, filesXml: Elem) extends DebugEnhancedLogging {
+class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
 
   private val fileItems = filesXml \ "file"
   private val ddmAccessRights = (ddm \ "profile" \ "accessRights").text

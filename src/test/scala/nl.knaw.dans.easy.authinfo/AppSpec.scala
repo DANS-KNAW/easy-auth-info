@@ -26,6 +26,7 @@ import org.scalatra.test.scalatest.ScalatraSuite
 
 import scala.util.{ Failure, Success }
 import scala.xml.Elem
+import scalaj.http.HttpResponse
 
 class AppSpec extends TestSupportFixture
   with ScalatraSuite
@@ -91,6 +92,14 @@ class AppSpec extends TestSupportFixture
     )
     inside(app.rightsOf(uuid, Paths.get("pakbon.xml"))) {
       case Failure(t) => t should have message "missing or invalid dataset accessrights"
+    }
+  }
+
+  it should "forward an exception on loading files.xml" in {
+    wiring.loadFilesXML _ expects uuid once() returning
+      Failure(HttpStatusException("", HttpResponse("", 404, Map[String, String]("Status"->"404"))))
+    inside(app.rightsOf(uuid, Paths.get("pakbon.xml"))) {
+      case Failure(HttpStatusException("", _)) =>
     }
   }
 }

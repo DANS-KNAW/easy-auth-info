@@ -33,7 +33,7 @@ trait HttpBagStoreComponent extends BagStoreComponent {
     override def loadXML(bagId: UUID, path: Path): Try[Elem] = {
       for {
         f <- Try(URLEncoder.encode(path.toString, "UTF8"))
-        url = baseUri.resolve(s"stores/pdbs/bags/$bagId/$f").toURL
+        url = baseUri.resolve(s"stores/pdbs/bags/$bagId/$f").toURL // TODO drop 'stores/pdbs' when easy-bag-store#43 not only merged but also versioned
         content <- getContent(url)
         xml = XML.loadString(content)
       } yield xml

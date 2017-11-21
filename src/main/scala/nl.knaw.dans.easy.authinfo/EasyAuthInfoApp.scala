@@ -26,12 +26,11 @@ import scala.util.{ Failure, Success, Try }
 
 class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with DebugEnhancedLogging {
 
-
   def rightsOf(bagId: UUID, path: Path): Try[Option[JValue]] = {
     for {
-      ddm <- wiring.loadDDM(bagId) // TODO read lazily
       filesXml <- wiring.loadFilesXML(bagId)
-      rights <- FileItems(ddm, filesXml).rightsOf(path)
+      ddm <- wiring.loadDDM(bagId) // TODO read lazily (when implementing solr index)
+      rights <- new FileItems(ddm, filesXml).rightsOf(path)
     } yield rights
   }
 
