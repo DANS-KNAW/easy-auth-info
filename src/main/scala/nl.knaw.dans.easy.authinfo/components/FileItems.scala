@@ -27,10 +27,9 @@ import scala.xml.{ Elem, Node }
 class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
 
   private val fileItems = filesXml \ "file"
-  private val ddmAccessRights = (ddm \ "profile" \ "accessRights").text
 
   // see ddm.xsd EasyAccessCategoryType
-  private def datasetAccessibleTo = ddmAccessRights match {
+  private lazy val datasetAccessibleTo = (ddm \ "profile" \ "accessRights").text match {
     // @formatter:off
     case "OPEN_ACCESS"                      => Some("ANONYMOUS")
     case "OPEN_ACCESS_FOR_REGISTERED_USERS" => Some("KNOWN")
