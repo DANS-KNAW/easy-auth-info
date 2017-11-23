@@ -63,7 +63,6 @@
 
 ########### the intended service
 
-# TODO fix the need for 'yum upgrade' and 'service restart' after re-build and 'vagrant provision'
 - hosts: "test"
   become: yes
   tasks:

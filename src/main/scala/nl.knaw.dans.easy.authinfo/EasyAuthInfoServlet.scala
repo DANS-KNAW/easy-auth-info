@@ -19,7 +19,7 @@ import java.nio.file.Paths
 import java.util.UUID
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.eclipse.jetty.http.HttpStatus.{ NOT_FOUND_404, REQUEST_TIMEOUT_408, SERVICE_UNAVAILABLE_503 }
+import org.eclipse.jetty.http.HttpStatus._
 import org.json4s.JsonAST.JValue
 import org.json4s.native.JsonMethods.{ pretty, render }
 import org.scalatra._
@@ -29,8 +29,6 @@ import scalaj.http.HttpResponse
 
 class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with DebugEnhancedLogging {
 
-  import app._
-
   get("/") {
     contentType = "text/plain"
     Ok("EASY Auth Info Service running...")
@@ -39,9 +37,10 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
   get("/:uuid/*") {
     contentType = "application/json"
     (getUUID, multiParams("splat")) match {
-      case (Success(uuid), Seq(path)) => respond(uuid, path, rightsOf(uuid, Paths.get(path)))
-      case (Failure(t), _) => BadRequest(s"UUID missing or not valid: ${ t.getMessage }")
-      case _ => BadRequest("file path is missing")
+      case (Success(uuid), Seq("")) => BadRequest("file path is missing")
+      case (Success(uuid), Seq(path)) => respond(uuid, path, app.rightsOf(uuid, Paths.get(path)))
+      case (Failure(t), _) => BadRequest(t.getMessage)
+      case _ => InternalServerError("not expected exception")
     }
   }
 
@@ -55,14 +54,7 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
       case Success(None) => NotFound(s"$uuid/$path does not exist")
       case Failure(HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _))) => ServiceUnavailable(message)
       case Failure(HttpStatusException(message, HttpResponse(_, REQUEST_TIMEOUT_408, _))) => RequestTimeout(message)
-      case Failure(HttpStatusException(message, HttpResponse(_, NOT_FOUND_404, _))) =>
-        val throwable = rights.failed.getOrElse(new Exception("should not get here"))
-        if (throwable.getMessage.contains(".xml")) {
-          logger.error(s"$uuid has incomplete metadata: $message", throwable)
-          InternalServerError("not expected exception")
-        } else  {
-          NotFound(s"$uuid does not exist")
-        }
+      case Failure(HttpStatusException(message, HttpResponse(_, NOT_FOUND_404, _))) if message.startsWith("Bag ") => NotFound(s"$uuid does not exist")
       case Failure(t) =>
         logger.error(t.getMessage, t)
         InternalServerError("not expected exception")
