@@ -19,10 +19,13 @@ import java.nio.file.Paths
 import java.util.UUID
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import org.eclipse.jetty.http.HttpStatus.{ NOT_FOUND_404, REQUEST_TIMEOUT_408, SERVICE_UNAVAILABLE_503 }
+import org.json4s.JsonAST.JValue
 import org.json4s.native.JsonMethods.{ pretty, render }
 import org.scalatra._
 
 import scala.util.{ Failure, Success, Try }
+import scalaj.http.HttpResponse
 
 class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with DebugEnhancedLogging {
 
@@ -33,24 +36,31 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
     Ok("EASY Auth Info Service running...")
   }
 
+  get("/:uuid/*") {
+    contentType = "application/json"
+    (getUUID, multiParams("splat")) match {
+      case (Success(uuid), Seq(path)) => respond(uuid, path, rightsOf(uuid, Paths.get(path)))
+      case (Failure(t), _) => BadRequest(s"UUID missing or not valid: ${t.getMessage}")
+      case _ => BadRequest("file path is missing")
+    }
+  }
+
   private def getUUID = {
     Try { UUID.fromString(params("uuid")) }
   }
 
-  get("/:uuid/*") {
-    contentType = "application/json"
-    (getUUID, multiParams("splat")) match {
-      case (Success(uuid), Seq(path)) => rightsOf(uuid, Paths.get(path)) match {
-        case Success(Some(rights)) => Ok(pretty(render(rights)))
-        case Success(None) => NotFound(s"$uuid/$path does not exist")
-          // TODO bag store not available?
-          // See https://github.com/DANS-KNAW/easy-update-solr4files-index/blob/055128d9dea0ea1013be178b7b6c795c0667a6e7/src/main/scala/nl.knaw.dans.easy.solr4files/SearchServlet.scala#L41-L43
-        case Failure(t) =>
-          logger.error(t.getMessage, t)
-          InternalServerError("not expected exception")
-      }
-      case (Failure(t), _) => BadRequest(s"UUID missing or not valid")
-      case _ => BadRequest("file path is missing")
+  private def respond(uuid: UUID, path: String, rights: Try[Option[JValue]]) = {
+    rights match {
+      case Success(Some(json)) => Ok(pretty(render(json)))
+      case Success(None) => NotFound(s"$uuid/$path does not exist")
+      case Failure(HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _))) => ServiceUnavailable(message)
+      case Failure(HttpStatusException(message, HttpResponse(_, REQUEST_TIMEOUT_408, _))) => RequestTimeout(message)
+      case Failure(HttpStatusException(message, HttpResponse(_, NOT_FOUND_404, _))) =>
+        logger.error(s"$uuid has incomplete metadata: $message", rights.failed.getOrElse(new Exception("should not get here")))
+        InternalServerError("not expected exception")
+      case Failure(t) =>
+        logger.error(t.getMessage, t)
+        InternalServerError("not expected exception")
     }
   }
 }
