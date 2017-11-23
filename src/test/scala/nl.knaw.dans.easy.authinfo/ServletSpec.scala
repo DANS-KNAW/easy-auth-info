@@ -26,14 +26,11 @@ class ServletSpec extends TestSupportFixture
   with ScalatraSuite
   with MockFactory {
 
-  private class App extends {
-    // mock needs a constructor without arguments
-    private val properties: PropertiesConfiguration = new PropertiesConfiguration() {
-      addProperty("bag-store.url", "http://localhost:20110/")
-    }
-  } with EasyAuthInfoApp(new ApplicationWiring(new Configuration("", properties)))
-
-  private val app = mock[App]
+  private class Wiring extends ApplicationWiring(new Configuration("", new PropertiesConfiguration() {
+    addProperty("bag-store.url", "http://localhost:20110/")
+  }))
+  private val wiring = mock[Wiring]
+  private val app = new EasyAuthInfoApp(wiring)
   addServlet(new EasyAuthInfoServlet(app), "/*")
 
   private val uuid = UUID.randomUUID()

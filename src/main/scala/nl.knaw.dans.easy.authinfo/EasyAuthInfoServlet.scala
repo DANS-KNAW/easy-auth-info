@@ -40,7 +40,7 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
     contentType = "application/json"
     (getUUID, multiParams("splat")) match {
       case (Success(uuid), Seq(path)) => respond(uuid, path, rightsOf(uuid, Paths.get(path)))
-      case (Failure(t), _) => BadRequest(s"UUID missing or not valid: ${t.getMessage}")
+      case (Failure(t), _) => BadRequest(s"UUID missing or not valid: ${ t.getMessage }")
       case _ => BadRequest("file path is missing")
     }
   }
@@ -56,8 +56,13 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
       case Failure(HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _))) => ServiceUnavailable(message)
       case Failure(HttpStatusException(message, HttpResponse(_, REQUEST_TIMEOUT_408, _))) => RequestTimeout(message)
       case Failure(HttpStatusException(message, HttpResponse(_, NOT_FOUND_404, _))) =>
-        logger.error(s"$uuid has incomplete metadata: $message", rights.failed.getOrElse(new Exception("should not get here")))
-        InternalServerError("not expected exception")
+        val throwable = rights.failed.getOrElse(new Exception("should not get here"))
+        if (throwable.getMessage.contains(".xml")) {
+          logger.error(s"$uuid has incomplete metadata: $message", throwable)
+          InternalServerError("not expected exception")
+        } else  {
+          NotFound(s"$uuid does not exist")
+        }
       case Failure(t) =>
         logger.error(t.getMessage, t)
         InternalServerError("not expected exception")
