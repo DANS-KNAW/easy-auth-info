@@ -61,14 +61,16 @@ class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
   }
 
   private def rightsAsJson(item: Node): Try[JValue] = {
-    lazy val dc = getValue(item, "accessRights", datasetAccessibleTo).map(_.toUpperCase)
-    val a = getValue(item, "accessibleToRights", dc)
-    val v = getValue(item, "visibleToRights", Some(anonymous))
-    if(a.isEmpty || v.isEmpty)
-      Failure(new Exception("missing or invalid dataset access rights"))
-    else if (!allowedValues.contains(a.getOrElse("?"))) // dcterms content not validated by XSD
-      Failure(new Exception(s"<accessibleToRights> not found and <dcterms:accessRights> [${a.getOrElse("?")}] should be one of $allowedValues"))
-    else Success(("accessibleTo" -> a.getOrElse("?")) ~ ("visibleTo" -> v.getOrElse("?")))
+    lazy val dctermsAccessRight = getValue(item, "accessRights", datasetAccessibleTo).map(_.toUpperCase)
+    val accessibleTo = getValue(item, "accessibleToRights", dctermsAccessRight)
+    val visibleTo = getValue(item, "visibleToRights", Some(anonymous))
+    if(accessibleTo.isEmpty || visibleTo.isEmpty)
+      Failure(new Exception("<visibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"))
+    else if (!allowedValues.contains(accessibleTo.getOrElse("?"))) // dcterms content not validated by XSD
+      Failure(new Exception(s"<accessibleToRights> not found in files.xml and <dcterms:accessRights> [${accessibleTo.getOrElse("?")}] should be one of $allowedValues"))
+    else Success(
+      ("accessibleTo" -> accessibleTo.getOrElse("?")) ~
+        ("visibleTo" -> visibleTo.getOrElse("?")))
   }
 
   private def getValue(item: Node, tag: String, default: => Option[String]): Option[String] = {

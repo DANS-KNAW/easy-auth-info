@@ -6,7 +6,7 @@ easy-auth-info
 SYNOPSIS
 --------
 
-    easy-auth-info file <UUID> <path>
+    easy-auth-info file <uuid> <path>
     easy-auth-info run-service
 
 DESCRIPTION
@@ -27,8 +27,8 @@ ARGUMENTS
           --help   Show help message
     
      trailing arguments:
-      bag-uuid (required)
-      file-path (required)
+      uuid (required)
+      path (required)
     ---
     
     Subcommand: run-service - Starts EASY Auth Info as a daemon that services HTTP requests

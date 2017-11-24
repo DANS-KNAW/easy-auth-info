@@ -49,7 +49,8 @@ class FileItemSpec extends TestSupportFixture {
       <files><file filepath="some.file"></file></files>
     ).rightsOf(Paths.get("some.file"))
     ) {
-      case Failure(t) => t.getMessage shouldBe "missing or invalid dataset access rights"
+      case Failure(t) => t.getMessage shouldBe
+        "<visibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"
     }
   }
 
@@ -111,7 +112,7 @@ class FileItemSpec extends TestSupportFixture {
     ).rightsOf(Paths.get("some.file"))
     ) {
       case Failure(t) => t.getMessage shouldBe
-        "<accessibleToRights> not found and <dcterms:accessRights> [INVALID]" +
+        "<accessibleToRights> not found in files.xml and <dcterms:accessRights> [INVALID]" +
         " should be one of List(ANONYMOUS, KNOWN, RESTRICTED_GROUP, RESTRICTED_REQUEST, NONE)"
     }
   }
