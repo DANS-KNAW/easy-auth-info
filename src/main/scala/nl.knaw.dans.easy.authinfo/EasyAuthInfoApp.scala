@@ -18,9 +18,10 @@ package nl.knaw.dans.easy.authinfo
 import java.nio.file.Path
 import java.util.UUID
 
-import nl.knaw.dans.easy.authinfo.components.FileItems
+import nl.knaw.dans.easy.authinfo.components.{ BagInfo, FileItems }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.JsonAST.{ JString, JValue }
+import org.json4s.JsonAST.JValue
+import org.json4s.JsonDSL._
 
 import scala.util.{ Failure, Success, Try }
 
@@ -31,7 +32,16 @@ class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with Debu
       filesXml <- wiring.loadFilesXML(bagId)
       ddm <- wiring.loadDDM(bagId) // TODO read lazily (when implementing solr index)
       rights <- new FileItems(ddm, filesXml).rightsOf(path)
-    } yield rights
+      bagInfoString <- wiring.loadBagInfo(bagId) // TODO skip the rest if rights == None (read: path not found in files.xml)
+      bagInfoMap <- new BagInfo(bagInfoString).properties
+      owner <- Try(bagInfoMap("EASY-User-Account"))
+        .recoverWith { case t => Failure(new Exception(s"'EASY-User-Account' not found (case sensitive) in bag-info.txt [${ t.getMessage }]")) }
+    } yield rights.map(value =>
+      ("itemId" -> s"$bagId/$path") ~
+        ("owner" -> owner) ~
+        ("accessibleTo" -> value.accessibleTo) ~
+        ("visibleTo" -> value.visibleTo)
+    )
   }
 
   def init(): Try[Unit] = {

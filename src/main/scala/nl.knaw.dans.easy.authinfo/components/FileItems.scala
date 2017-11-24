@@ -18,12 +18,11 @@ package nl.knaw.dans.easy.authinfo.components
 import java.nio.file.Path
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.JsonAST.JValue
-import org.json4s.JsonDSL._
 
 import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, Node }
 
+case class FileRights(accessibleTo: String, visibleTo: String)
 class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
 
   private val fileItems = filesXml \ "file"
@@ -47,7 +46,7 @@ class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
   }
   private val allowedValues = Seq(anonymous, known, restrictedGroup, restrictedRequest, none)
 
-  def rightsOf(path: Path): Try[Option[JValue]] = {
+  def rightsOf(path: Path): Try[Option[FileRights]] = {
     fileItems
       .find(_
         .attribute("filepath")
@@ -60,7 +59,7 @@ class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
     }
   }
 
-  private def rightsAsJson(item: Node): Try[JValue] = {
+  private def rightsAsJson(item: Node): Try[FileRights] = {
     lazy val dctermsAccessRight = getValue(item, "accessRights", datasetAccessibleTo).map(_.toUpperCase)
     val accessibleTo = getValue(item, "accessibleToRights", dctermsAccessRight)
     val visibleTo = getValue(item, "visibleToRights", Some(anonymous))
@@ -68,9 +67,7 @@ class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
       Failure(new Exception("<visibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"))
     else if (!allowedValues.contains(accessibleTo.getOrElse("?"))) // dcterms content not validated by XSD
       Failure(new Exception(s"<accessibleToRights> not found in files.xml and <dcterms:accessRights> [${accessibleTo.getOrElse("?")}] should be one of $allowedValues"))
-    else Success(
-      ("accessibleTo" -> accessibleTo.getOrElse("?")) ~
-        ("visibleTo" -> visibleTo.getOrElse("?")))
+    else Success(FileRights(accessibleTo.getOrElse("?"), visibleTo.getOrElse("?")))
   }
 
   private def getValue(item: Node, tag: String, default: => Option[String]): Option[String] = {

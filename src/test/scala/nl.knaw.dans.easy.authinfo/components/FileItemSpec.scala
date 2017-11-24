@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.authinfo.components
 import java.nio.file.Paths
 
 import nl.knaw.dans.easy.authinfo.TestSupportFixture
-import org.json4s.JsonDSL._
 
 import scala.util.{ Failure, Success }
 import scala.xml.Elem
@@ -40,7 +39,7 @@ class FileItemSpec extends TestSupportFixture {
       openAccessDDM,
       <files><file filepath="some.file"></file></files>
     ).rightsOf(Paths.get("some.file")) shouldBe
-      Success(Some(("accessibleTo" -> "ANONYMOUS") ~ ("visibleTo" -> "ANONYMOUS")))
+      Success(Some(FileRights(accessibleTo = "ANONYMOUS", visibleTo = "ANONYMOUS")))
   }
 
   it should "report an invalid DDM" in {
@@ -61,7 +60,7 @@ class FileItemSpec extends TestSupportFixture {
         <accessibleToRights>RESTRICTED_GROUP</accessibleToRights>
       </file></files>
     ).rightsOf(Paths.get("some.file")) shouldBe
-      Success(Some(("accessibleTo" -> "RESTRICTED_GROUP") ~ ("visibleTo" -> "ANONYMOUS")))
+      Success(Some(FileRights(accessibleTo = "RESTRICTED_GROUP", visibleTo = "ANONYMOUS")))
   }
 
   it should "use file rights" in {
@@ -72,7 +71,7 @@ class FileItemSpec extends TestSupportFixture {
         <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
       </file></files>
     ).rightsOf(Paths.get("some.file")) shouldBe
-      Success(Some(("accessibleTo" -> "NONE") ~ ("visibleTo" -> "RESTRICTED_REQUEST")))
+      Success(Some(FileRights(accessibleTo = "NONE", visibleTo = "RESTRICTED_REQUEST")))
   }
 
   it should "ignore <dcterms:accessRights> if there is an <accessibleToRights>" in {
@@ -84,7 +83,7 @@ class FileItemSpec extends TestSupportFixture {
         <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
       </file></files>
     ).rightsOf(Paths.get("some.file")) shouldBe
-      Success(Some(("accessibleTo" -> "NONE") ~ ("visibleTo" -> "RESTRICTED_REQUEST")))
+      Success(Some(FileRights(accessibleTo = "NONE", visibleTo = "RESTRICTED_REQUEST")))
   }
 
   it should "use <dcterms:accessRights> if there is no <accessibleToRights>" in {
@@ -97,11 +96,11 @@ class FileItemSpec extends TestSupportFixture {
         </file>
       </files>
     ).rightsOf(Paths.get("some.file")) shouldBe
-      Success(Some(("accessibleTo" -> "KNOWN") ~ ("visibleTo" -> "RESTRICTED_REQUEST")))
+      Success(Some(FileRights(accessibleTo = "KNOWN", visibleTo = "RESTRICTED_REQUEST")))
   }
 
   it should "report invalid <dcterms:accessRights>" in {
-    inside (new FileItems(
+    inside(new FileItems(
       emptyDDM,
       <files xmlns:dcterms="http://purl.org/dc/terms/">
         <file filepath="some.file">
@@ -113,7 +112,7 @@ class FileItemSpec extends TestSupportFixture {
     ) {
       case Failure(t) => t.getMessage shouldBe
         "<accessibleToRights> not found in files.xml and <dcterms:accessRights> [INVALID]" +
-        " should be one of List(ANONYMOUS, KNOWN, RESTRICTED_GROUP, RESTRICTED_REQUEST, NONE)"
+          " should be one of List(ANONYMOUS, KNOWN, RESTRICTED_GROUP, RESTRICTED_REQUEST, NONE)"
     }
   }
 }

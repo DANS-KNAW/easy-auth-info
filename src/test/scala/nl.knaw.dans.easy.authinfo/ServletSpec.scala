@@ -19,11 +19,10 @@ import java.util.UUID
 
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.eclipse.jetty.http.HttpStatus._
-import org.json4s.native.JsonMethods
 import org.scalamock.scalatest.MockFactory
 import org.scalatra.test.scalatest.ScalatraSuite
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Failure, Success }
 import scalaj.http.HttpResponse
 
 class ServletSpec extends TestSupportFixture with ServletFixture
@@ -46,6 +45,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   "get /:uuid/*" should "return json" in {
+    wiring.loadBagInfo _ expects uuid once() returning Success("EASY-User-Account:someone")
     wiring.loadDDM _ expects uuid once() returning Success(<ddm:DDM></ddm:DDM>)
     wiring.loadFilesXML _ expects uuid once() returning Success(
       <files>
@@ -57,16 +57,41 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     )
     get(s"$uuid/some.file") {
       status shouldBe OK_200
-      Try(JsonMethods.parse(body)) shouldBe a[Success[_]] // content details are tested with FileItemSpec
+      body shouldBe
+        s"""{
+           |  "itemId":"$uuid/some.file",
+           |  "owner":"someone",
+           |  "accessibleTo":"KNOWN",
+           |  "visibleTo":"KNOWN"
+           |}""".stripMargin
+      // variations are tested with FileItemSpec
     }
   }
 
   it should "report file not found" in {
     wiring.loadDDM _ expects uuid once() returning Success(<ddm:DDM></ddm:DDM>)
     wiring.loadFilesXML _ expects uuid once() returning Success(<files></files>)
+    wiring.loadBagInfo _ expects uuid once() returning Success("EASY-User-Account:someone")
     get(s"$uuid/some.file") {
       body shouldBe s"$uuid/some.file does not exist"
       status shouldBe NOT_FOUND_404
+    }
+  }
+
+  it should "report depositor not found" in {
+    wiring.loadBagInfo _ expects uuid once() returning Success("account:someone") // wrong key
+    wiring.loadDDM _ expects uuid once() returning Success(<ddm:DDM></ddm:DDM>)
+    wiring.loadFilesXML _ expects uuid once() returning Success(
+      <files>
+        <file filepath="some.file">
+          <accessibleToRights>KNOWN</accessibleToRights>
+          <visibleToRights>KNOWN</visibleToRights>
+        </file>
+      </files>
+    )
+    get(s"$uuid/some.file") {
+      body shouldBe s"not expected exception"
+      status shouldBe INTERNAL_SERVER_ERROR_500
     }
   }
 
@@ -79,7 +104,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
 
   it should "report missing path" in {
     get(s"$uuid/") {
-      body shouldBe "file path is missing"
+      body shouldBe "file path is empty"
       status shouldBe BAD_REQUEST_400
     }
   }

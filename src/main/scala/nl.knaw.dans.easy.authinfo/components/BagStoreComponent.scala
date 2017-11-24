@@ -19,8 +19,11 @@ import java.net.{ URI, URLEncoder }
 import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
-import scala.util.Try
+import nl.knaw.dans.easy.authinfo.HttpStatusException
+
+import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, XML }
+import scalaj.http.Http
 
 trait BagStoreComponent {
 
@@ -32,6 +35,15 @@ trait BagStoreComponent {
 
   def loadFilesXML(bagId: UUID): Try[Elem] = {
     bagStore.loadXML(bagId, Paths.get("metadata/files.xml"))
+  }
+
+  def loadBagInfo(bagId: UUID): Try[String] = {
+    for {
+      url <- Try(URLEncoder.encode("bag-info.txt", "UTF8"))
+      response = Http(url.toString).method("GET").asString
+      _ <- if (response.isSuccess) Success(())
+           else Failure(HttpStatusException(url.toString, response))
+    } yield response.body
   }
 
   trait BagStore {

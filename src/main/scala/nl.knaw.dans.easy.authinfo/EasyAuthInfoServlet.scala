@@ -37,7 +37,7 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
   get("/:uuid/*") {
     contentType = "application/json"
     (getUUID, multiParams("splat")) match {
-      case (Success(uuid), Seq("")) => BadRequest("file path is missing")
+      case (Success(uuid), Seq("")) => BadRequest("file path is empty")
       case (Success(uuid), Seq(path)) => respond(uuid, path, app.rightsOf(uuid, Paths.get(path)))
       case (Failure(t), _) => BadRequest(t.getMessage)
       case _ => InternalServerError("not expected exception")
