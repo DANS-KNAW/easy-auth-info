@@ -56,8 +56,8 @@ class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
   private def rigthsAsJson(item: Node): Try[JValue] = {
     val a = getRigths(item, "accessibleToRights")
     val v = getRigths(item, "visibleToRights")
-    if(a.isEmpty || v.isEmpty) Failure(new Exception("missing or invalid dataset accessrights"))
-    else Success(("accessibleTo" -> a.get) ~ ("visibleTo" -> v.get))
+    if(a.isEmpty || v.isEmpty) Failure(new Exception("missing or invalid dataset access rights"))
+    else Success(("accessibleTo" -> a.getOrElse("?")) ~ ("visibleTo" -> v.getOrElse("?")))
   }
 
   private def getRigths(item: Node, accessRights: String): Option[String] = {

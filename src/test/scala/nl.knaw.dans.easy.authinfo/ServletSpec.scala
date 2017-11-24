@@ -19,11 +19,11 @@ import java.util.UUID
 
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.eclipse.jetty.http.HttpStatus._
+import org.json4s.native.JsonMethods
 import org.scalamock.scalatest.MockFactory
 import org.scalatra.test.scalatest.ScalatraSuite
 
-import scala.util.{ Failure, Success }
-import scala.xml.Elem
+import scala.util.{ Failure, Success, Try }
 import scalaj.http.HttpResponse
 
 class ServletSpec extends TestSupportFixture with ServletFixture
@@ -31,14 +31,12 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   with MockFactory {
 
   private class Wiring extends ApplicationWiring(new Configuration("", new PropertiesConfiguration() {
+    // need a constructor without arguments for the mock, the constructor needs a valid property
     addProperty("bag-store.url", "http://localhost:20110/")
   }))
-  private val wiring = mock[Wiring]
-  private val app = new EasyAuthInfoApp(wiring)
-  addServlet(new EasyAuthInfoServlet(app), "/*")
-
   private val uuid = UUID.randomUUID()
-  private val ddmOpenAccess: Elem = <ddm:DDM><ddm:profile><ddm:accessRights>OPEN_ACCESS</ddm:accessRights></ddm:profile></ddm:DDM>
+  private val wiring = mock[Wiring] // mocking at a low level to test the chain of error handling
+  addServlet(new EasyAuthInfoServlet(new EasyAuthInfoApp(wiring)), "/*")
 
   "get /" should "return the message that the service is running" in {
     get("/") {
@@ -48,19 +46,23 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   "get /:uuid/*" should "return json" in {
-    wiring.loadDDM _ expects uuid once() returning Success(ddmOpenAccess)
-    wiring.loadFilesXML _ expects uuid once() returning Success(<files><file filepath="some.file"></file></files>)
+    wiring.loadDDM _ expects uuid once() returning Success(<ddm:DDM></ddm:DDM>)
+    wiring.loadFilesXML _ expects uuid once() returning Success(
+      <files>
+        <file filepath="some.file">
+          <accessibleToRights>KNOWN</accessibleToRights>
+          <visibleToRights>KNOWN</visibleToRights>
+        </file>
+      </files>
+    )
     get(s"$uuid/some.file") {
-      body shouldBe """{
-                      |  "accessibleTo":"ANONYMOUS",
-                      |  "visibleTo":"ANONYMOUS"
-                      |}""".stripMargin
       status shouldBe OK_200
+      Try(JsonMethods.parse(body)) shouldBe a[Success[_]] // content details are tested with FileItemSpec
     }
   }
 
   it should "report file not found" in {
-    wiring.loadDDM _ expects uuid once() returning Success(ddmOpenAccess)
+    wiring.loadDDM _ expects uuid once() returning Success(<ddm:DDM></ddm:DDM>)
     wiring.loadFilesXML _ expects uuid once() returning Success(<files></files>)
     get(s"$uuid/some.file") {
       body shouldBe s"$uuid/some.file does not exist"
@@ -83,7 +85,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report bag not found" in {
-    wiring.loadFilesXML _ expects uuid once() returning Failure(createHttpException(s"Bag $uuid does not exist in BagStore", 404))
+    wiring.loadFilesXML _ expects uuid once() returning httpException(s"Bag $uuid does not exist in BagStore")
     get(s"$uuid/some.file") {
       body shouldBe s"$uuid does not exist"
       status shouldBe NOT_FOUND_404
@@ -91,14 +93,15 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report invalid bag" in {
-    wiring.loadFilesXML _ expects uuid once() returning Failure(createHttpException(s"File $uuid/metadata/files.xml does not exist in BagStore", 404))
+    wiring.loadFilesXML _ expects uuid once() returning httpException(s"File $uuid/metadata/files.xml does not exist in BagStore")
     get(s"$uuid/some.file") {
       body shouldBe "not expected exception"
       status shouldBe INTERNAL_SERVER_ERROR_500
     }
   }
 
-  private def createHttpException(msg: String, code: Int) = {
-    HttpStatusException(msg, HttpResponse("", code, Map[String, String]("Status" -> s"$code")))
+  private def httpException(message: String, code: Int = 404) = {
+    val headers = Map[String, String]("Status" -> s"$code")
+    Failure(HttpStatusException(message, HttpResponse("", code, headers)))
   }
 }
