@@ -28,17 +28,24 @@ class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
 
   private val fileItems = filesXml \ "file"
 
+  private val none = "NONE"
+  private val known = "KNOWN"
+  private val anonymous = "ANONYMOUS"
+  private val restrictedGroup = "RESTRICTED_GROUP"
+  private val restrictedRequest = "RESTRICTED_REQUEST"
+
   // see ddm.xsd EasyAccessCategoryType
   private lazy val datasetAccessibleTo = (ddm \ "profile" \ "accessRights").text match {
     // @formatter:off
-    case "OPEN_ACCESS"                      => Some("ANONYMOUS")
-    case "OPEN_ACCESS_FOR_REGISTERED_USERS" => Some("KNOWN")
-    case "GROUP_ACCESS"                     => Some("RESTRICTED_GROUP")
-    case "REQUEST_PERMISSION"               => Some("RESTRICTED_REQUEST")
-    case "NO_ACCESS"                        => Some("NONE")
+    case "OPEN_ACCESS"                      => Some(anonymous)
+    case "OPEN_ACCESS_FOR_REGISTERED_USERS" => Some(known)
+    case "GROUP_ACCESS"                     => Some(restrictedGroup)
+    case "REQUEST_PERMISSION"               => Some(restrictedRequest)
+    case "NO_ACCESS"                        => Some(none)
     case _                                  => None
     // @formatter:off
   }
+  private val allowedValues = Seq(anonymous, known, restrictedGroup, restrictedRequest, none)
 
   def rightsOf(path: Path): Try[Option[JValue]] = {
     fileItems
@@ -46,24 +53,28 @@ class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
         .attribute("filepath")
         .map(_.text)
         .contains(path.toString)
-      ).map(rigthsAsJson) match {
+      ).map(rightsAsJson) match {
       case Some(Success(v)) => Success(Some(v))
       case Some(Failure(t)) => Failure(t)
       case None => Success(None)
     }
   }
 
-  private def rigthsAsJson(item: Node): Try[JValue] = {
-    val a = getRigths(item, "accessibleToRights")
-    val v = getRigths(item, "visibleToRights")
-    if(a.isEmpty || v.isEmpty) Failure(new Exception("missing or invalid dataset access rights"))
+  private def rightsAsJson(item: Node): Try[JValue] = {
+    lazy val dc = getValue(item, "accessRights", datasetAccessibleTo).map(_.toUpperCase)
+    val a = getValue(item, "accessibleToRights", dc)
+    val v = getValue(item, "visibleToRights", Some(anonymous))
+    if(a.isEmpty || v.isEmpty)
+      Failure(new Exception("missing or invalid dataset access rights"))
+    else if (!allowedValues.contains(a.getOrElse("?"))) // dcterms content not validated by XSD
+      Failure(new Exception(s"<accessibleToRights> not found and <dcterms:accessRights> [${a.getOrElse("?")}] should be one of $allowedValues"))
     else Success(("accessibleTo" -> a.getOrElse("?")) ~ ("visibleTo" -> v.getOrElse("?")))
   }
 
-  private def getRigths(item: Node, accessRights: String): Option[String] = {
-    (item \ accessRights).map(_.text).mkString match {
-      case "" => datasetAccessibleTo
-      case s => Some(s)
+  private def getValue(item: Node, tag: String, default: => Option[String]): Option[String] = {
+    (item \ tag).headOption.map(_.text) match {
+      case Some(s) => Some(s)
+      case None => default
     }
   }
 }

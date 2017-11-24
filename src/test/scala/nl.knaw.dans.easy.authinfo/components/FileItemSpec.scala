@@ -65,12 +65,54 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "use file rights" in {
     new FileItems(
-      openAccessDDM,
+      emptyDDM,
       <files><file filepath="some.file">
         <accessibleToRights>NONE</accessibleToRights>
         <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
       </file></files>
     ).rightsOf(Paths.get("some.file")) shouldBe
       Success(Some(("accessibleTo" -> "NONE") ~ ("visibleTo" -> "RESTRICTED_REQUEST")))
+  }
+
+  it should "ignore <dcterms:accessRights> if there is an <accessibleToRights>" in {
+    new FileItems(
+      emptyDDM,
+      <files><file filepath="some.file">
+        <dcterms:accessRights>KNOWN</dcterms:accessRights>
+        <accessibleToRights>NONE</accessibleToRights>
+        <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
+      </file></files>
+    ).rightsOf(Paths.get("some.file")) shouldBe
+      Success(Some(("accessibleTo" -> "NONE") ~ ("visibleTo" -> "RESTRICTED_REQUEST")))
+  }
+
+  it should "use <dcterms:accessRights> if there is no <accessibleToRights>" in {
+    new FileItems(
+      emptyDDM,
+      <files xmlns:dcterms="http://purl.org/dc/terms/">
+        <file filepath="some.file">
+          <dcterms:accessRights>KNOWN</dcterms:accessRights>
+          <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
+        </file>
+      </files>
+    ).rightsOf(Paths.get("some.file")) shouldBe
+      Success(Some(("accessibleTo" -> "KNOWN") ~ ("visibleTo" -> "RESTRICTED_REQUEST")))
+  }
+
+  it should "report invalid <dcterms:accessRights>" in {
+    inside (new FileItems(
+      emptyDDM,
+      <files xmlns:dcterms="http://purl.org/dc/terms/">
+        <file filepath="some.file">
+          <dcterms:accessRights>invalid</dcterms:accessRights>
+          <visibleToRights>KNOWN</visibleToRights>
+        </file>
+      </files>
+    ).rightsOf(Paths.get("some.file"))
+    ) {
+      case Failure(t) => t.getMessage shouldBe
+        "<accessibleToRights> not found and <dcterms:accessRights> [INVALID]" +
+        " should be one of List(ANONYMOUS, KNOWN, RESTRICTED_GROUP, RESTRICTED_REQUEST, NONE)"
+    }
   }
 }
