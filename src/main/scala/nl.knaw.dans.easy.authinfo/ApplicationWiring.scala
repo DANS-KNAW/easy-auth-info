@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.authinfo
 
 import java.net.URI
 
-import nl.knaw.dans.easy.authinfo.components.HttpBagStoreComponent
+import nl.knaw.dans.easy.authinfo.components.BagStoreComponent
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 /**
@@ -26,9 +26,9 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
  * @param configuration the application configuration
  */
 class ApplicationWiring(configuration: Configuration) extends DebugEnhancedLogging
-  with HttpBagStoreComponent {
+  with BagStoreComponent {
 
-  override val bagStore: BagStore = new HttpBagStore {
+  override val bagStore: BagStore = new BagStore {
     override val baseUri: URI = new URI(configuration.properties.getString("bag-store.url"))
   }
 }

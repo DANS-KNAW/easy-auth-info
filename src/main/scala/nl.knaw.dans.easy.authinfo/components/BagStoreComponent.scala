@@ -15,13 +15,15 @@
  */
 package nl.knaw.dans.easy.authinfo.components
 
+import java.net.{ URI, URLEncoder }
 import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
 import scala.util.Try
-import scala.xml.Elem
+import scala.xml.{ Elem, XML }
 
 trait BagStoreComponent {
+
   val bagStore: BagStore
 
   def loadDDM(bagId: UUID): Try[Elem] = {
@@ -33,6 +35,14 @@ trait BagStoreComponent {
   }
 
   trait BagStore {
-    def loadXML(bagId: UUID, path: Path): Try[Elem]
+    val baseUri: URI
+
+    def loadXML(bagId: UUID, path: Path): Try[Elem] = {
+      for {
+        f <- Try(URLEncoder.encode(path.toString, "UTF8"))
+        url = baseUri.resolve(s"stores/pdbs/bags/$bagId/$f").toURL // TODO drop 'stores/pdbs' when easy-bag-store#43 not only merged but also versioned
+        xml = XML.load(url)
+      } yield xml
+    }
   }
 }
