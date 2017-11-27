@@ -16,7 +16,6 @@
 package nl.knaw.dans.easy.authinfo.components
 
 import java.net.{ URI, URL, URLEncoder }
-import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
 import nl.knaw.dans.easy.authinfo.HttpStatusException
