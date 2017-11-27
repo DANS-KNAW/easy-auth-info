@@ -24,37 +24,35 @@ import scala.xml.Elem
 
 class FileItemSpec extends TestSupportFixture {
 
-  private val openAccessDDM: Elem = <ddm:DDM><ddm:profile><ddm:accessRights>OPEN_ACCESS</ddm:accessRights></ddm:profile></ddm:DDM>
+  private val openAccessProfile: Elem =
+      <ddm:profile>
+        <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
+        <ddm:available>1992-07-30</ddm:available>
+      </ddm:profile>
 
   "rightsOf" should "return none" in {
-    new FileItems(
-      <ddm:DDM/>,
-      <files></files>
-    ).rightsOf(Paths.get("some.file")) shouldBe Success(None)
+    new FileItems(<ddm:profile/>, <files/>)
+      .rightsOf(Paths.get("some.file")) shouldBe Success(None)
   }
 
   it should "use the dataset rights" in {
-    new FileItems(
-      openAccessDDM,
-      <files><file filepath="some.file"></file></files>
-    ).rightsOf(Paths.get("some.file")) shouldBe
+    new FileItems(openAccessProfile, <files><file filepath="some.file"></file></files>)
+      .rightsOf(Paths.get("some.file")) shouldBe
       Success(Some(FileRights(accessibleTo = "ANONYMOUS", visibleTo = "ANONYMOUS")))
   }
 
   it should "report an invalid DDM" in {
-    inside(new FileItems(
-      <ddm:DDM/>,
-      <files><file filepath="some.file"></file></files>
-    ).rightsOf(Paths.get("some.file"))
+    inside(new FileItems(<ddm:profile/>, <files><file filepath="some.file"></file></files>)
+      .rightsOf(Paths.get("some.file"))
     ) {
       case Failure(t) => t.getMessage shouldBe
-        "<visibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"
+        "<accessibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"
     }
   }
 
   it should "use a mix of file rights and dataset rights" in {
     new FileItems(
-      openAccessDDM,
+      openAccessProfile,
       <files><file filepath="some.file">
         <accessibleToRights>RESTRICTED_GROUP</accessibleToRights>
       </file></files>
@@ -64,7 +62,7 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "use file rights" in {
     new FileItems(
-      <ddm:DDM/>,
+      <ddm:profile/>,
       <files><file filepath="some.file">
         <accessibleToRights>NONE</accessibleToRights>
         <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
@@ -75,7 +73,7 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "ignore <dcterms:accessRights> if there is an <accessibleToRights>" in {
     new FileItems(
-      <ddm:DDM/>,
+      <ddm:profile/>,
       <files><file filepath="some.file">
         <dcterms:accessRights>KNOWN</dcterms:accessRights>
         <accessibleToRights>NONE</accessibleToRights>
@@ -87,7 +85,7 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "use <dcterms:accessRights> if there is no <accessibleToRights>" in {
     new FileItems(
-      <ddm:DDM/>,
+      <ddm:profile/>,
       <files xmlns:dcterms="http://purl.org/dc/terms/">
         <file filepath="some.file">
           <dcterms:accessRights>KNOWN</dcterms:accessRights>
@@ -100,7 +98,7 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "report invalid <dcterms:accessRights>" in {
     inside(new FileItems(
-      <ddm:DDM/>,
+      <ddm:profile/>,
       <files xmlns:dcterms="http://purl.org/dc/terms/">
         <file filepath="some.file">
           <dcterms:accessRights>invalid</dcterms:accessRights>

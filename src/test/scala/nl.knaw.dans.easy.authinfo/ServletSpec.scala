@@ -23,6 +23,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatra.test.scalatest.ScalatraSuite
 
 import scala.util.{ Failure, Success }
+import scala.xml.Elem
 import scalaj.http.HttpResponse
 
 class ServletSpec extends TestSupportFixture with ServletFixture
@@ -31,11 +32,18 @@ class ServletSpec extends TestSupportFixture with ServletFixture
 
   private val wiring = new ApplicationWiring(new Configuration("", new PropertiesConfiguration() {
     addProperty("bag-store.url", "http://localhost:20110/")
-  })){
+  })) {
     // mocking at a low level to test the chain of error handling
     override val bagStore: BagStore = mock[BagStore]
   }
   private val uuid = UUID.randomUUID()
+  private val openAccessDDM: Elem =
+    <ddm:DDM>
+      <ddm:profile>
+        <ddm:accessRights>OPEN_ACCESS</ddm:accessRights>
+        <ddm:available>1992-07-30</ddm:available>
+      </ddm:profile>
+    </ddm:DDM>
   addServlet(new EasyAuthInfoServlet(new EasyAuthInfoApp(wiring)), "/*")
 
   "get /" should "return the message that the service is running" in {
@@ -47,7 +55,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
 
   "get /:uuid/*" should "return json" in {
     wiring.bagStore.loadBagInfo _ expects uuid once() returning Success("EASY-User-Account:someone")
-    wiring.bagStore.loadDDM _ expects uuid once() returning Success(<ddm:DDM/>)
+    wiring.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
     wiring.bagStore.loadFilesXML _ expects uuid once() returning Success(
       <files>
         <file filepath="some.file">
@@ -62,6 +70,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
         s"""{
            |  "itemId":"$uuid/some.file",
            |  "owner":"someone",
+           |  "dateAvailable":"1992-07-30",
            |  "accessibleTo":"KNOWN",
            |  "visibleTo":"KNOWN"
            |}""".stripMargin
@@ -70,7 +79,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report file not found" in {
-    wiring.bagStore.loadDDM _ expects uuid once() returning Success(<ddm:DDM/>)
+    wiring.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
     wiring.bagStore.loadFilesXML _ expects uuid once() returning Success(<files/>)
     wiring.bagStore.loadBagInfo _ expects uuid once() returning Success("EASY-User-Account:someone")
     get(s"$uuid/some.file") {
@@ -103,7 +112,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
 
   it should "report depositor not found" in {
     wiring.bagStore.loadBagInfo _ expects uuid once() returning Success("")
-    wiring.bagStore.loadDDM _ expects uuid once() returning Success(<ddm:DDM/>)
+    wiring.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
     wiring.bagStore.loadFilesXML _ expects uuid once() returning Success(<files><file filepath="some.file"/></files>)
     get(s"$uuid/some.file") { // TODO intercept logging to show difference with the next test?
       body shouldBe s"not expected exception"

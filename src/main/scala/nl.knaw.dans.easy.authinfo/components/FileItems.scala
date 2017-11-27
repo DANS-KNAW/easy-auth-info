@@ -23,7 +23,7 @@ import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, Node }
 
 case class FileRights(accessibleTo: String, visibleTo: String)
-class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
+class FileItems(ddmProfile: Node, filesXml: Elem) extends DebugEnhancedLogging {
 
   private val fileItems = filesXml \ "file"
 
@@ -34,7 +34,7 @@ class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
   private val restrictedRequest = "RESTRICTED_REQUEST"
 
   // see ddm.xsd EasyAccessCategoryType
-  private lazy val datasetAccessibleTo = (ddm \ "profile" \ "accessRights").text match {
+  private lazy val datasetAccessibleTo = (ddmProfile \ "accessRights").text match {
     // @formatter:off
     case "OPEN_ACCESS"                      => Some(anonymous)
     case "OPEN_ACCESS_FOR_REGISTERED_USERS" => Some(known)
