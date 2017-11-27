@@ -31,11 +31,11 @@ class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with Debu
   def rightsOf(bagId: UUID, path: Path): Try[Option[JValue]] = {
     for {
       filesXml <- wiring.bagStore.loadFilesXML(bagId)
+      // TODO skip the rest if path not in files.xml, see find in FileItems.rightsOf
       ddm <- wiring.bagStore.loadDDM(bagId)
       ddmProfile <- getTag(ddm, "profile")
       dateAvailable <- getTag(ddmProfile, "available").map(_.text)
       rights <- new FileItems(ddmProfile, filesXml).rightsOf(path)
-      // TODO skip the rest if rights == None (read: path not found in files.xml)
       bagInfoString <- wiring.bagStore.loadBagInfo(bagId)
       bagInfoMap <- BagInfo(bagInfoString).properties
       owner <- getDepositor(bagInfoMap)
