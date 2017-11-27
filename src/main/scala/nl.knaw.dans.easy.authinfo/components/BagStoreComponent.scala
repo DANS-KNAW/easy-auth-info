@@ -34,11 +34,11 @@ trait BagStoreComponent {
     val baseUri: URI
 
     def loadDDM(bagId: UUID): Try[Elem] = {
-      loadAsXml(bagId, "metadata/dataset.xml")
+      toURL(bagId, "metadata/dataset.xml").map(XML.load)
     }
 
     def loadFilesXML(bagId: UUID): Try[Elem] = {
-      loadAsXml(bagId, "metadata/files.xml")
+      toURL(bagId, "metadata/files.xml").map(XML.load)
     }
 
     def loadBagInfo(bagId: UUID): Try[String] = {
@@ -52,13 +52,6 @@ trait BagStoreComponent {
         _ <- if (response.isSuccess) Success(())
              else Failure(HttpStatusException(url.toString, response))
       } yield response.body
-    }
-
-    private def loadAsXml(bagId: UUID, path: String): Try[Elem] = {
-      for {
-        url <- toURL(bagId, path)
-        xml = XML.load(url)
-      } yield xml
     }
 
     private def toURL(bagId: UUID, path: String): Try[URL] = Try {
