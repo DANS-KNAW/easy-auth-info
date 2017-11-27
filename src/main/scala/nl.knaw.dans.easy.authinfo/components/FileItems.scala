@@ -62,18 +62,24 @@ class FileItems(ddm: => Elem, filesXml: Elem) extends DebugEnhancedLogging {
   private def rightsAsJson(item: Node): Try[FileRights] = {
     lazy val dctermsAccessRight = getValue(item, "accessRights", datasetAccessibleTo).map(_.toUpperCase)
     val accessibleTo = getValue(item, "accessibleToRights", dctermsAccessRight)
-    val visibleTo = getValue(item, "visibleToRights", Some(anonymous))
-    if(accessibleTo.isEmpty || visibleTo.isEmpty)
-      Failure(new Exception("<visibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"))
+    if(accessibleTo.isEmpty)
+      Failure(new Exception("<accessibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"))
     else if (!allowedValues.contains(accessibleTo.getOrElse("?"))) // dcterms content not validated by XSD
       Failure(new Exception(s"<accessibleToRights> not found in files.xml and <dcterms:accessRights> [${accessibleTo.getOrElse("?")}] should be one of $allowedValues"))
-    else Success(FileRights(accessibleTo.getOrElse("?"), visibleTo.getOrElse("?")))
+    else {
+      val visibleTo = getVal(item, "visibleToRights").getOrElse(anonymous)
+      Success(FileRights(accessibleTo.getOrElse("?"), visibleTo))
+    }
   }
 
   private def getValue(item: Node, tag: String, default: => Option[String]): Option[String] = {
-    (item \ tag).headOption.map(_.text) match {
+    getVal(item, tag) match {
       case Some(s) => Some(s)
       case None => default
     }
+  }
+
+  private def getVal(item: Node, tag: String): Option[String] = {
+    (item \ tag).headOption.map(_.text)
   }
 }
