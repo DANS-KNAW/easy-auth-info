@@ -62,7 +62,7 @@ INSTALLATION AND CONFIGURATION
 ------------------------------
 
 
-### Dependencies
+### Depending on services
 
 * [easy-bag-store](https://github.com/DANS-KNAW/easy-bag-store/)
 

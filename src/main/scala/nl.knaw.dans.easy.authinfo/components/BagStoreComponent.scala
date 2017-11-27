@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.authinfo.components
 
-import java.net.{ URI, URLEncoder }
+import java.net.{ URI, URL, URLEncoder }
 import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
@@ -29,32 +29,41 @@ trait BagStoreComponent {
 
   val bagStore: BagStore
 
-  def loadDDM(bagId: UUID): Try[Elem] = {
-    bagStore.loadXML(bagId, Paths.get("metadata/dataset.xml"))
-  }
-
-  def loadFilesXML(bagId: UUID): Try[Elem] = {
-    bagStore.loadXML(bagId, Paths.get("metadata/files.xml"))
-  }
-
-  def loadBagInfo(bagId: UUID): Try[String] = {
-    for {
-      url <- Try(URLEncoder.encode("bag-info.txt", "UTF8"))
-      response = Http(url.toString).method("GET").asString
-      _ <- if (response.isSuccess) Success(())
-           else Failure(HttpStatusException(url.toString, response))
-    } yield response.body
-  }
 
   trait BagStore {
     val baseUri: URI
 
-    def loadXML(bagId: UUID, path: Path): Try[Elem] = {
+    def loadDDM(bagId: UUID): Try[Elem] = {
+      loadAsXml(bagId, "metadata/dataset.xml")
+    }
+
+    def loadFilesXML(bagId: UUID): Try[Elem] = {
+      loadAsXml(bagId, "metadata/files.xml")
+    }
+
+    def loadBagInfo(bagId: UUID): Try[String] = {
+      loadAsString(bagId, "bag-info.txt")
+    }
+
+    private def loadAsString(bagId: UUID, path: String): Try[String] = {
       for {
-        f <- Try(URLEncoder.encode(path.toString, "UTF8"))
-        url = baseUri.resolve(s"stores/pdbs/bags/$bagId/$f").toURL // TODO drop 'stores/pdbs' when easy-bag-store#43 not only merged but also versioned
+        url <- toURL(bagId, path)
+        response = Http(url.toString).method("GET").asString
+        _ <- if (response.isSuccess) Success(())
+             else Failure(HttpStatusException(url.toString, response))
+      } yield response.body
+    }
+
+    private def loadAsXml(bagId: UUID, path: String): Try[Elem] = {
+      for {
+        url <- toURL(bagId, path)
         xml = XML.load(url)
       } yield xml
+    }
+
+    private def toURL(bagId: UUID, path: String): Try[URL] = Try {
+      val f = URLEncoder.encode(path, "UTF8")
+      baseUri.resolve(s"stores/pdbs/bags/$bagId/$f").toURL // TODO drop 'stores/pdbs' when easy-bag-store#43 not only merged but also versioned
     }
   }
 }

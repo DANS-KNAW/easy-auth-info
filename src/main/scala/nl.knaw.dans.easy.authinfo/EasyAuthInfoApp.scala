@@ -29,11 +29,11 @@ class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with Debu
 
   def rightsOf(bagId: UUID, path: Path): Try[Option[JValue]] = {
     for {
-      filesXml <- wiring.loadFilesXML(bagId)
-      ddm <- wiring.loadDDM(bagId) // TODO read lazily (when implementing solr index)
+      filesXml <- wiring.bagStore.loadFilesXML(bagId)
+      ddm <- wiring.bagStore.loadDDM(bagId) // TODO read lazily (when implementing solr index)
       rights <- new FileItems(ddm, filesXml).rightsOf(path)
-      bagInfoString <- wiring.loadBagInfo(bagId) // TODO skip the rest if rights == None (read: path not found in files.xml)
-      bagInfoMap <- new BagInfo(bagInfoString).properties
+      bagInfoString <- wiring.bagStore.loadBagInfo(bagId) // TODO skip the rest if rights == None (read: path not found in files.xml)
+      bagInfoMap <- BagInfo(bagInfoString).properties
       owner <- Try(bagInfoMap("EASY-User-Account"))
         .recoverWith { case t => Failure(new Exception(s"'EASY-User-Account' not found (case sensitive) in bag-info.txt [${ t.getMessage }]")) }
     } yield rights.map(value =>

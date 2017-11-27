@@ -2,12 +2,12 @@ package nl.knaw.dans.easy.authinfo.components
 
 import scala.util.Try
 
-class BagInfo(content: String) {
+case class BagInfo(private val content: String) {
   val properties: Try[Map[String, String]] = Try(content
     .split("\n")
     .map { line =>
-      val parts = line.split(":")
-      (parts.head.trim, parts.last.trim)
+      val Array(k, v) = line.split(":")
+      (k.trim, v.trim)
     }
     .toMap)
 }

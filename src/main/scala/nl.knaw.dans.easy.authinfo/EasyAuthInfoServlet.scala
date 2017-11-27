@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.authinfo
 
-import java.nio.file.Paths
+import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -36,9 +36,9 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
 
   get("/:uuid/*") {
     contentType = "application/json"
-    (getUUID, multiParams("splat")) match {
-      case (Success(uuid), Seq("")) => BadRequest("file path is empty")
-      case (Success(uuid), Seq(path)) => respond(uuid, path, app.rightsOf(uuid, Paths.get(path)))
+    (getUUID, getPath) match {
+      case (Success(_), Success(None)) => BadRequest("file path is empty")
+      case (Success(uuid), Success(Some(path))) => respond(uuid, path, app.rightsOf(uuid, path))
       case (Failure(t), _) => BadRequest(t.getMessage)
       case _ => InternalServerError("not expected exception")
     }
@@ -48,7 +48,11 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
     Try { UUID.fromString(params("uuid")) }
   }
 
-  private def respond(uuid: UUID, path: String, rights: Try[Option[JValue]]) = {
+  private def getPath = Try {
+    multiParams("splat").find(_.trim != "").map(Paths.get(_))
+  }
+
+  private def respond(uuid: UUID, path: Path, rights: Try[Option[JValue]]) = {
     rights match {
       case Success(Some(json)) => Ok(pretty(render(json)))
       case Success(None) => NotFound(s"$uuid/$path does not exist")

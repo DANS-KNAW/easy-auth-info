@@ -45,7 +45,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |""".stripMargin)
 
   private implicit def bagId: ValueConverter[UUID] = {
-    singleArgConverter(s => UUID.fromString(s))
+    singleArgConverter(UUID.fromString)
   }
 
   val file = new Subcommand("file") {

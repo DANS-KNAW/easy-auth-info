@@ -25,11 +25,10 @@ import scala.xml.Elem
 class FileItemSpec extends TestSupportFixture {
 
   private val openAccessDDM: Elem = <ddm:DDM><ddm:profile><ddm:accessRights>OPEN_ACCESS</ddm:accessRights></ddm:profile></ddm:DDM>
-  private val emptyDDM: Elem = <ddm:DDM></ddm:DDM>
 
   "rightsOf" should "return none" in {
     new FileItems(
-      emptyDDM,
+      <ddm:DDM/>,
       <files></files>
     ).rightsOf(Paths.get("some.file")) shouldBe Success(None)
   }
@@ -44,7 +43,7 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "report an invalid DDM" in {
     inside(new FileItems(
-      emptyDDM,
+      <ddm:DDM/>,
       <files><file filepath="some.file"></file></files>
     ).rightsOf(Paths.get("some.file"))
     ) {
@@ -65,7 +64,7 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "use file rights" in {
     new FileItems(
-      emptyDDM,
+      <ddm:DDM/>,
       <files><file filepath="some.file">
         <accessibleToRights>NONE</accessibleToRights>
         <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
@@ -76,7 +75,7 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "ignore <dcterms:accessRights> if there is an <accessibleToRights>" in {
     new FileItems(
-      emptyDDM,
+      <ddm:DDM/>,
       <files><file filepath="some.file">
         <dcterms:accessRights>KNOWN</dcterms:accessRights>
         <accessibleToRights>NONE</accessibleToRights>
@@ -88,7 +87,7 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "use <dcterms:accessRights> if there is no <accessibleToRights>" in {
     new FileItems(
-      emptyDDM,
+      <ddm:DDM/>,
       <files xmlns:dcterms="http://purl.org/dc/terms/">
         <file filepath="some.file">
           <dcterms:accessRights>KNOWN</dcterms:accessRights>
@@ -101,7 +100,7 @@ class FileItemSpec extends TestSupportFixture {
 
   it should "report invalid <dcterms:accessRights>" in {
     inside(new FileItems(
-      emptyDDM,
+      <ddm:DDM/>,
       <files xmlns:dcterms="http://purl.org/dc/terms/">
         <file filepath="some.file">
           <dcterms:accessRights>invalid</dcterms:accessRights>
