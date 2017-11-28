@@ -6,7 +6,7 @@ easy-auth-info
 SYNOPSIS
 --------
 
-    easy-auth-info file <uuid> <path>
+    easy-auth-info <uuid>/<path>
     easy-auth-info run-service
 
 DESCRIPTION
@@ -23,14 +23,6 @@ ARGUMENTS
         --help      Show help message
         --version   Show version of this program
 
-    Subcommand: file - get accessibility of a file
-          --help   Show help message
-    
-     trailing arguments:
-      uuid (required)
-      path (required)
-    ---
-    
     Subcommand: run-service - Starts EASY Auth Info as a daemon that services HTTP requests
         --help   Show help message
     ---
@@ -52,10 +44,8 @@ Path       | Action
 EXAMPLES
 --------
 
-    easy-auth-info 40594b6d-8378-4260-b96b-13b57beadf7c data/pakbon.xml
+    easy-auth-info 40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml
     curl http://localhost:20170/40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml
-
-Note the space between uuid and path in the command line interface which becomes a slash for the REST interface.
 
 
 INSTALLATION AND CONFIGURATION

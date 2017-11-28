@@ -16,6 +16,8 @@
 package nl.knaw.dans.easy.authinfo
 
 import java.io.FileNotFoundException
+import java.nio.file.Path
+import java.util.UUID
 
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -50,12 +52,21 @@ object Command extends App with DebugEnhancedLogging {
     commandLine.subcommand
       .collect {
         case commandLine.runService => runAsService(app)
-        case file @ commandLine.file => app.rightsOf(file.bagUuid(), file.filePath()).flatMap {
-          case Some(f) => Success(pretty(render(f)))
-          case None => Failure(new FileNotFoundException(s"${ file.bagUuid() }/${ file.filePath() }"))
-        }
+        case file @ commandLine.file => executeFileCommand(app, file.path())
       }
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
+  }
+
+  private def executeFileCommand(app: EasyAuthInfoApp, fullPath: Path) = {
+    (for {
+      root <- Try(Option(fullPath.getRoot).get).recoverWith { case _ => Failure(new Exception(s"no root element found in [$fullPath]")) }
+      uuid <- Try(UUID.fromString(root.toString)).recoverWith { case t => Failure(new Exception(s"root is not a valid uuid [$fullPath]", t)) }
+      subPath = fullPath.relativize(root)
+      rightsOf <- app.rightsOf(uuid, subPath)
+    } yield rightsOf match {
+      case Some(rights) => Success(pretty(render(rights)))
+      case None => Failure(new FileNotFoundException(fullPath.toString))
+    }).flatten
   }
 
   private def runAsService(app: EasyAuthInfoApp): Try[FeedBackMessage] = Try {

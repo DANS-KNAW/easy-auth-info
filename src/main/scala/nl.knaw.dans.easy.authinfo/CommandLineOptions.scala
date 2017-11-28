@@ -15,7 +15,7 @@
  */
 package nl.knaw.dans.easy.authinfo
 
-import java.nio.file.Path
+import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
 import org.rogach.scallop.{ ScallopConf, ScallopOption, Subcommand, ValueConverter, singleArgConverter }
@@ -29,7 +29,6 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Provides consolidated authorization info about items in a bag store."""
   val synopsis: String =
     s"""
-       |  $printedName file <uuid> <path>
        |  $printedName run-service""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
@@ -50,8 +49,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
 
   val file = new Subcommand("file") {
     descr("get accessibility of a file")
-    val bagUuid: ScallopOption[UUID] = trailArg[UUID](name = "uuid", required = true)
-    val filePath: ScallopOption[Path] = trailArg[Path](name = "path", required = true)
+    val path: ScallopOption[Path] = trailArg[Path](name = "path", required = true)
     footer(SUBCOMMAND_SEPARATOR)
   }
 
@@ -60,7 +58,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
       "Starts EASY Auth Info as a daemon that services HTTP requests")
     footer(SUBCOMMAND_SEPARATOR)
   }
-  addSubcommand(file)
+  // addSubcommand(file) // TODO not a sub-command
   addSubcommand(runService)
 
   footer("")
