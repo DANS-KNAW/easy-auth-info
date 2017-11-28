@@ -49,7 +49,7 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
   }
 
   private def getPath = Try {
-    multiParams("splat").find(_.trim != "").map(Paths.get(_))
+    multiParams("splat").find(_.trim.nonEmpty).map(Paths.get(_))
   }
 
   private def respond(uuid: UUID, path: Path, rights: Try[Option[JValue]]) = {
