@@ -25,7 +25,7 @@ class ServiceStarter extends Daemon with DebugEnhancedLogging {
   override def init(context: DaemonContext): Unit = {
     logger.info("Initializing service...")
     val configuration = Configuration()
-    app = new EasyAuthInfoApp(new ApplicationWiring(configuration))
+    app = EasyAuthInfoApp(configuration)
     service = new EasyAuthInfoService(configuration.properties.getInt("daemon.http.port"), app)
     logger.info("Service initialized.")
   }

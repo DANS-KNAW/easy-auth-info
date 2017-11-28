@@ -26,17 +26,17 @@ import org.json4s.JsonDSL._
 import scala.util.{ Failure, Success, Try }
 import scala.xml.Node
 
-class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with DebugEnhancedLogging {
+trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
 
   def rightsOf(bagId: UUID, path: Path): Try[Option[JValue]] = {
     for {
-      filesXml <- wiring.bagStore.loadFilesXML(bagId)
+      filesXml <- bagStore.loadFilesXML(bagId)
       // TODO skip the rest if path not in files.xml, see find in FileItems.rightsOf
-      ddm <- wiring.bagStore.loadDDM(bagId)
+      ddm <- bagStore.loadDDM(bagId)
       ddmProfile <- getTag(ddm, "profile")
       dateAvailable <- getTag(ddmProfile, "available").map(_.text)
       rights <- new FileItems(ddmProfile, filesXml).rightsOf(path)
-      bagInfoString <- wiring.bagStore.loadBagInfo(bagId)
+      bagInfoString <- bagStore.loadBagInfo(bagId)
       bagInfoMap <- BagInfo(bagInfoString).properties
       owner <- getDepositor(bagInfoMap)
     } yield rights.map(value =>
@@ -66,5 +66,11 @@ class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with Debu
 
   override def close(): Unit = {
 
+  }
+}
+
+object EasyAuthInfoApp {
+  def apply(conf: Configuration): EasyAuthInfoApp = new EasyAuthInfoApp {
+    override lazy val configuration: Configuration = conf
   }
 }

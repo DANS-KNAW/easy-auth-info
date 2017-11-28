@@ -28,7 +28,6 @@ trait BagStoreComponent {
 
   val bagStore: BagStore
 
-
   trait BagStore {
     val baseUri: URI
 

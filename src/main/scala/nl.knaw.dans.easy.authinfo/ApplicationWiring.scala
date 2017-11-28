@@ -22,11 +22,13 @@ import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 /**
  * Initializes and wires together the components of this application.
- *
- * @param configuration the application configuration
  */
-class ApplicationWiring(configuration: Configuration) extends DebugEnhancedLogging
-  with BagStoreComponent {
+trait ApplicationWiring extends BagStoreComponent {
+
+  /**
+   * the application configuration
+   */
+  val configuration: Configuration
 
   override val bagStore: BagStore = new BagStore {
     override val baseUri: URI = new URI(configuration.properties.getString("bag-store.url"))
