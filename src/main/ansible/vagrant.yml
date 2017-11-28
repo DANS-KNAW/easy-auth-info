@@ -39,7 +39,6 @@
     yum:
       name: "dans.knaw.nl-easy-bag-store"
       state: latest
-      # TODO latest -> snapshot
 
   - name: Configure bag stores
     lineinfile:

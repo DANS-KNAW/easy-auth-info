@@ -59,7 +59,7 @@ trait BagStoreComponent {
 
     private def toURL(bagId: UUID, path: String): Try[URL] = Try {
       val f = URLEncoder.encode(path, "UTF8")
-      baseUri.resolve(s"stores/pdbs/bags/$bagId/$f").toURL // TODO drop 'stores/pdbs' when easy-bag-store#43 not only merged but also versioned
+      baseUri.resolve(s"bags/$bagId/$f").toURL
     }
   }
 }
