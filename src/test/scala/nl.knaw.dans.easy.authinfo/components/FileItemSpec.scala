@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.authinfo.components
 import java.nio.file.Paths
 
 import nl.knaw.dans.easy.authinfo.TestSupportFixture
+import nl.knaw.dans.easy.authinfo.components.RightsFor._
 
 import scala.util.{ Failure, Success }
 import scala.xml.Elem
@@ -54,7 +55,7 @@ class FileItemSpec extends TestSupportFixture {
     new FileItems(
       openAccessProfile,
       <files><file filepath="some.file">
-        <accessibleToRights>RESTRICTED_GROUP</accessibleToRights>
+        <accessibleToRights>{RESTRICTED_GROUP}</accessibleToRights>
       </file></files>
     ).rightsOf(Paths.get("some.file")) shouldBe
       Success(Some(FileRights(accessibleTo = "RESTRICTED_GROUP", visibleTo = "ANONYMOUS")))
@@ -64,23 +65,23 @@ class FileItemSpec extends TestSupportFixture {
     new FileItems(
       <ddm:profile/>,
       <files><file filepath="some.file">
-        <accessibleToRights>NONE</accessibleToRights>
-        <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
+        <accessibleToRights>{NONE}</accessibleToRights>
+        <visibleToRights>{RESTRICTED_REQUEST}</visibleToRights>
       </file></files>
     ).rightsOf(Paths.get("some.file")) shouldBe
-      Success(Some(FileRights(accessibleTo = "NONE", visibleTo = "RESTRICTED_REQUEST")))
+      Success(Some(FileRights(accessibleTo = NONE.toString, visibleTo = RESTRICTED_REQUEST.toString)))
   }
 
   it should "ignore <dcterms:accessRights> if there is an <accessibleToRights>" in {
     new FileItems(
       <ddm:profile/>,
       <files><file filepath="some.file">
-        <dcterms:accessRights>KNOWN</dcterms:accessRights>
-        <accessibleToRights>NONE</accessibleToRights>
-        <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
+        <dcterms:accessRights>{KNOWN}</dcterms:accessRights>
+        <accessibleToRights>{NONE}</accessibleToRights>
+        <visibleToRights>{RESTRICTED_REQUEST}</visibleToRights>
       </file></files>
     ).rightsOf(Paths.get("some.file")) shouldBe
-      Success(Some(FileRights(accessibleTo = "NONE", visibleTo = "RESTRICTED_REQUEST")))
+      Success(Some(FileRights(accessibleTo = NONE.toString, visibleTo = RESTRICTED_REQUEST.toString)))
   }
 
   it should "use <dcterms:accessRights> if there is no <accessibleToRights>" in {
@@ -88,8 +89,8 @@ class FileItemSpec extends TestSupportFixture {
       <ddm:profile/>,
       <files xmlns:dcterms="http://purl.org/dc/terms/">
         <file filepath="some.file">
-          <dcterms:accessRights>KNOWN</dcterms:accessRights>
-          <visibleToRights>RESTRICTED_REQUEST</visibleToRights>
+          <dcterms:accessRights>{KNOWN}</dcterms:accessRights>
+          <visibleToRights>{RESTRICTED_REQUEST}</visibleToRights>
         </file>
       </files>
     ).rightsOf(Paths.get("some.file")) shouldBe
@@ -102,13 +103,13 @@ class FileItemSpec extends TestSupportFixture {
       <files xmlns:dcterms="http://purl.org/dc/terms/">
         <file filepath="some.file">
           <dcterms:accessRights>rubbish</dcterms:accessRights>
-          <visibleToRights>KNOWN</visibleToRights>
+          <visibleToRights>{KNOWN}</visibleToRights>
         </file>
       </files>
     ).rightsOf(Paths.get("some.file"))
     ) {
       case Failure(t) => t.getMessage shouldBe
-        "<dcterms:accessRights> [RUBBISH] in files.xml should be one of List(ANONYMOUS, KNOWN, RESTRICTED_GROUP, RESTRICTED_REQUEST, NONE)"
+        "<dcterms:accessRights> [RUBBISH] in files.xml should be one of: ANONYMOUS, KNOWN, NONE, RESTRICTED_GROUP, RESTRICTED_REQUEST"
     }
   }
 }

@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.authinfo.components
 
 import java.nio.file.Path
 
+import nl.knaw.dans.easy.authinfo.components.RightsFor._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
 import scala.util.{ Failure, Success, Try }
@@ -27,24 +28,18 @@ class FileItems(ddmProfile: Node, filesXml: Elem) extends DebugEnhancedLogging {
 
   private val fileItems = filesXml \ "file"
 
-  private val none = "NONE"
-  private val known = "KNOWN"
-  private val anonymous = "ANONYMOUS"
-  private val restrictedGroup = "RESTRICTED_GROUP"
-  private val restrictedRequest = "RESTRICTED_REQUEST"
-
   // see ddm.xsd EasyAccessCategoryType
   private lazy val datasetAccessibleTo = (ddmProfile \ "accessRights").text match {
     // @formatter:off
-    case "OPEN_ACCESS"                      => Some(anonymous)
-    case "OPEN_ACCESS_FOR_REGISTERED_USERS" => Some(known)
-    case "GROUP_ACCESS"                     => Some(restrictedGroup)
-    case "REQUEST_PERMISSION"               => Some(restrictedRequest)
-    case "NO_ACCESS"                        => Some(none)
+    case "OPEN_ACCESS"                      => Some(ANONYMOUS.toString)
+    case "OPEN_ACCESS_FOR_REGISTERED_USERS" => Some(KNOWN.toString)
+    case "GROUP_ACCESS"                     => Some(RESTRICTED_GROUP.toString)
+    case "REQUEST_PERMISSION"               => Some(RESTRICTED_REQUEST.toString)
+    case "NO_ACCESS"                        => Some(NONE.toString)
     case _                                  => None
     // @formatter:off
   }
-  private val allowedValues = Seq(anonymous, known, restrictedGroup, restrictedRequest, none)
+  private val allowedValues = RightsFor.values.map(_.toString)
 
   def rightsOf(path: Path): Try[Option[FileRights]] = {
     fileItems
@@ -73,9 +68,9 @@ class FileItems(ddmProfile: Node, filesXml: Elem) extends DebugEnhancedLogging {
       Failure(new Exception("<accessibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"))
     else if (!allowedValues.contains(accessibleTo.getOrElse("?")))
              // <dcterms:accessRights> (synonym for <accessibleToRights>) content not validated by XSD
-      Failure(new Exception(s"<dcterms:accessRights> [${accessibleTo.getOrElse("?")}] in files.xml should be one of $allowedValues"))
+      Failure(new Exception(s"<dcterms:accessRights> [${accessibleTo.getOrElse("?")}] in files.xml should be one of: ${allowedValues.mkString(", ")}"))
     else {
-      val visibleTo = getValue("visibleToRights").getOrElse(anonymous)
+      val visibleTo = getValue("visibleToRights").getOrElse(ANONYMOUS.toString)
       Success(FileRights(accessibleTo.getOrElse("?"), visibleTo))
     }
   }

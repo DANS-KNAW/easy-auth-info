@@ -17,6 +17,7 @@ package nl.knaw.dans.easy.authinfo
 
 import java.util.UUID
 
+import nl.knaw.dans.easy.authinfo.components.RightsFor._
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.eclipse.jetty.http.HttpStatus._
 import org.scalamock.scalatest.MockFactory
@@ -59,8 +60,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     wiring.bagStore.loadFilesXML _ expects uuid once() returning Success(
       <files>
         <file filepath="some.file">
-          <accessibleToRights>KNOWN</accessibleToRights>
-          <visibleToRights>KNOWN</visibleToRights>
+          <accessibleToRights>{KNOWN}</accessibleToRights>
+          <visibleToRights>{KNOWN}</visibleToRights>
         </file>
       </files>
     )
