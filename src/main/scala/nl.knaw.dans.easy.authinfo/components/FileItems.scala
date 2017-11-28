@@ -71,8 +71,9 @@ class FileItems(ddmProfile: Node, filesXml: Elem) extends DebugEnhancedLogging {
       )
     if(accessibleTo.isEmpty)
       Failure(new Exception("<accessibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"))
-    else if (!allowedValues.contains(accessibleTo.getOrElse("?"))) // dcterms content not validated by XSD
-      Failure(new Exception(s"<accessibleToRights> not found in files.xml and <dcterms:accessRights> [${accessibleTo.getOrElse("?")}] should be one of $allowedValues"))
+    else if (!allowedValues.contains(accessibleTo.getOrElse("?")))
+             // <dcterms:accessRights> (synonym for <accessibleToRights>) content not validated by XSD
+      Failure(new Exception(s"<dcterms:accessRights> [${accessibleTo.getOrElse("?")}] in files.xml should be one of $allowedValues"))
     else {
       val visibleTo = getValue("visibleToRights").getOrElse(anonymous)
       Success(FileRights(accessibleTo.getOrElse("?"), visibleTo))

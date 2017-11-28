@@ -101,15 +101,14 @@ class FileItemSpec extends TestSupportFixture {
       <ddm:profile/>,
       <files xmlns:dcterms="http://purl.org/dc/terms/">
         <file filepath="some.file">
-          <dcterms:accessRights>invalid</dcterms:accessRights>
+          <dcterms:accessRights>rubbish</dcterms:accessRights>
           <visibleToRights>KNOWN</visibleToRights>
         </file>
       </files>
     ).rightsOf(Paths.get("some.file"))
     ) {
       case Failure(t) => t.getMessage shouldBe
-        "<accessibleToRights> not found in files.xml and <dcterms:accessRights> [INVALID]" +
-          " should be one of List(ANONYMOUS, KNOWN, RESTRICTED_GROUP, RESTRICTED_REQUEST, NONE)"
+        "<dcterms:accessRights> [RUBBISH] in files.xml should be one of List(ANONYMOUS, KNOWN, RESTRICTED_GROUP, RESTRICTED_REQUEST, NONE)"
     }
   }
 }
