@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.authinfo.components
 import java.net.{ URI, URL, URLEncoder }
 import java.util.UUID
 
-import nl.knaw.dans.easy.authinfo.HttpStatusException
+import nl.knaw.dans.easy.authinfo.{ BagInfo, HttpStatusException }
 
 import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, XML }
@@ -39,8 +39,8 @@ trait BagStoreComponent {
       toURL(bagId, "metadata/files.xml").map(XML.load)
     }
 
-    def loadBagInfo(bagId: UUID): Try[String] = {
-      loadAsString(bagId, "bag-info.txt")
+    def loadBagInfo(bagId: UUID): Try[BagInfo] = {
+      loadAsString(bagId, "bag-info.txt").flatMap(parseBagInfo)
     }
 
     private def loadAsString(bagId: UUID, path: String): Try[String] = {
@@ -55,6 +55,16 @@ trait BagStoreComponent {
     private def toURL(bagId: UUID, path: String): Try[URL] = Try {
       val f = URLEncoder.encode(path, "UTF8")
       baseUri.resolve(s"stores/pdbs/bags/$bagId/$f").toURL // TODO drop 'stores/pdbs' when easy-bag-store#43 not only merged but also versioned
+    }
+
+    private def parseBagInfo(input: String): Try[BagInfo] = Try {
+      input
+        .split("\n")
+        .map { line =>
+          val Array(k, v) = line.split(":", 2)
+          (k.trim, v.trim)
+        }
+        .toMap
     }
   }
 }

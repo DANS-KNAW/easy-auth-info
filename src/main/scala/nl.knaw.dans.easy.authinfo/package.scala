@@ -20,6 +20,8 @@ import scalaj.http.HttpResponse
 
 package object authinfo {
 
+  type BagInfo = Map[String, String]
+
   case class HttpStatusException(msg: String, response: HttpResponse[String])
     extends Exception(s"$msg - ${ response.statusLine }, details: ${ response.body }")
 

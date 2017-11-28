@@ -56,7 +56,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   "get /:uuid/*" should "return json" in {
-    app.bagStore.loadBagInfo _ expects uuid once() returning Success("EASY-User-Account:someone")
+    app.bagStore.loadBagInfo _ expects uuid once() returning Success(Map("EASY-User-Account" -> "someone"))
     app.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
     app.bagStore.loadFilesXML _ expects uuid once() returning Success(
       <files>
@@ -83,7 +83,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   it should "report file not found" in {
     app.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
     app.bagStore.loadFilesXML _ expects uuid once() returning Success(<files/>)
-    app.bagStore.loadBagInfo _ expects uuid once() returning Success("EASY-User-Account:someone")
+    app.bagStore.loadBagInfo _ expects uuid once() returning Success(Map("EASY-User-Account" -> "someone"))
     get(s"$uuid/some.file") {
       body shouldBe s"$uuid/some.file does not exist"
       status shouldBe NOT_FOUND_404
@@ -113,7 +113,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report depositor not found" in {
-    app.bagStore.loadBagInfo _ expects uuid once() returning Success("")
+    app.bagStore.loadBagInfo _ expects uuid once() returning Success(Map.empty)
     app.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
     app.bagStore.loadFilesXML _ expects uuid once() returning Success(<files><file filepath="some.file"/></files>)
     get(s"$uuid/some.file") { // TODO intercept logging to show difference with the next test?
