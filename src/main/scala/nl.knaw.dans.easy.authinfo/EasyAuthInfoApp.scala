@@ -57,6 +57,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       .recoverWith { case t => Failure(new Exception(s"'EASY-User-Account' (case sensitive) not found in bag-info.txt [${ t.getMessage }]")) }
   }
 
+  // TODO remove init and close (+ AutoCloseable interface)
   def init(): Try[Unit] = {
     // Do any initialization of the application here. Typical examples are opening
     // databases or connecting to other services.
