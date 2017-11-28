@@ -40,17 +40,21 @@ trait BagStoreComponent {
     }
 
     def loadBagInfo(bagId: UUID): Try[BagInfo] = {
-      toURL(bagId, "bag-info.txt").map(loadBagInfo)
+      toURL(bagId, "bag-info.txt").flatMap(loadBagInfo)
     }
 
-    private def loadBagInfo(url: URL): BagInfo = {
-      Http(url.toString).method("GET").asString.body
+    private def loadBagInfo(url: URL): Try[BagInfo] = {
+      for {
+        response <- Try { Http(url.toString).method("GET").asString }
+        _ <- if (response.isSuccess) Success(())
+             else Failure(HttpStatusException(url.toString, response))
+      } yield response
+        .body
         .split("\n")
         .map { line =>
           val Array(k, v) = line.split(":", 2)
           (k.trim, v.trim)
-        }
-        .toMap
+        }.toMap
     }
 
     private def toURL(bagId: UUID, path: String): Try[URL] = Try {
