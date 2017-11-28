@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.authinfo
 import java.nio.file.Path
 import java.util.UUID
 
-import nl.knaw.dans.easy.authinfo.components.{ BagInfo, FileItems }
+import nl.knaw.dans.easy.authinfo.components.FileItems
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.JsonAST.JValue
 import org.json4s.JsonDSL._
@@ -26,19 +26,18 @@ import org.json4s.JsonDSL._
 import scala.util.{ Failure, Success, Try }
 import scala.xml.Node
 
-class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with DebugEnhancedLogging {
+trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
 
   def rightsOf(bagId: UUID, path: Path): Try[Option[JValue]] = {
     for {
-      filesXml <- wiring.bagStore.loadFilesXML(bagId)
+      filesXml <- bagStore.loadFilesXML(bagId)
       // TODO skip the rest if path not in files.xml, see find in FileItems.rightsOf
-      ddm <- wiring.bagStore.loadDDM(bagId)
+      ddm <- bagStore.loadDDM(bagId)
       ddmProfile <- getTag(ddm, "profile")
       dateAvailable <- getTag(ddmProfile, "available").map(_.text)
       rights <- new FileItems(ddmProfile, filesXml).rightsOf(path)
-      bagInfoString <- wiring.bagStore.loadBagInfo(bagId)
-      bagInfoMap <- BagInfo(bagInfoString).properties
-      owner <- getDepositor(bagInfoMap)
+      bagInfo <- bagStore.loadBagInfo(bagId)
+      owner <- getDepositor(bagInfo)
     } yield rights.map(value =>
       ("itemId" -> s"$bagId/$path") ~
         ("owner" -> owner) ~
@@ -53,11 +52,12 @@ class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with Debu
       .recoverWith { case t => Failure(new Exception(s"<ddm:$tag> not found in dataset.xml [${ t.getMessage }]")) }
   }
 
-  private def getDepositor(bagInfoMap: Map[String, String]) = {
+  private def getDepositor(bagInfoMap: BagInfo) = {
     Try(bagInfoMap("EASY-User-Account"))
       .recoverWith { case t => Failure(new Exception(s"'EASY-User-Account' (case sensitive) not found in bag-info.txt [${ t.getMessage }]")) }
   }
 
+  // TODO remove init and close (+ AutoCloseable interface)
   def init(): Try[Unit] = {
     // Do any initialization of the application here. Typical examples are opening
     // databases or connecting to other services.
@@ -66,5 +66,11 @@ class EasyAuthInfoApp(wiring: ApplicationWiring) extends AutoCloseable with Debu
 
   override def close(): Unit = {
 
+  }
+}
+
+object EasyAuthInfoApp {
+  def apply(conf: Configuration): EasyAuthInfoApp = new EasyAuthInfoApp {
+    override lazy val configuration: Configuration = conf
   }
 }

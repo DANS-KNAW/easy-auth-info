@@ -33,7 +33,7 @@ object Command extends App with DebugEnhancedLogging {
   val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
     verify()
   }
-  val app = new EasyAuthInfoApp(new ApplicationWiring(configuration))
+  val app = EasyAuthInfoApp(configuration)
 
   managed(app)
     .acquireAndGet(app => {

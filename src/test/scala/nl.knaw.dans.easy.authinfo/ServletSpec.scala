@@ -31,11 +31,12 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   with ScalatraSuite
   with MockFactory {
 
-  private val wiring = new ApplicationWiring(new Configuration("", new PropertiesConfiguration() {
-    addProperty("bag-store.url", "http://localhost:20110/")
-  })) {
+  private val app = new EasyAuthInfoApp {
     // mocking at a low level to test the chain of error handling
     override val bagStore: BagStore = mock[BagStore]
+    override lazy val configuration: Configuration = new Configuration("", new PropertiesConfiguration() {
+      addProperty("bag-store.url", "http://localhost:20110/")
+    })
   }
   private val uuid = UUID.randomUUID()
   private val openAccessDDM: Elem =
@@ -45,7 +46,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
         <ddm:available>1992-07-30</ddm:available>
       </ddm:profile>
     </ddm:DDM>
-  addServlet(new EasyAuthInfoServlet(new EasyAuthInfoApp(wiring)), "/*")
+  addServlet(new EasyAuthInfoServlet(app), "/*")
 
   "get /" should "return the message that the service is running" in {
     get("/") {
@@ -55,9 +56,9 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   "get /:uuid/*" should "return json" in {
-    wiring.bagStore.loadBagInfo _ expects uuid once() returning Success("EASY-User-Account:someone")
-    wiring.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
-    wiring.bagStore.loadFilesXML _ expects uuid once() returning Success(
+    app.bagStore.loadBagInfo _ expects uuid once() returning Success(Map("EASY-User-Account" -> "someone"))
+    app.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
+    app.bagStore.loadFilesXML _ expects uuid once() returning Success(
       <files>
         <file filepath="some.file">
           <accessibleToRights>{KNOWN}</accessibleToRights>
@@ -80,9 +81,9 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report file not found" in {
-    wiring.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
-    wiring.bagStore.loadFilesXML _ expects uuid once() returning Success(<files/>)
-    wiring.bagStore.loadBagInfo _ expects uuid once() returning Success("EASY-User-Account:someone")
+    app.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
+    app.bagStore.loadFilesXML _ expects uuid once() returning Success(<files/>)
+    app.bagStore.loadBagInfo _ expects uuid once() returning Success(Map("EASY-User-Account" -> "someone"))
     get(s"$uuid/some.file") {
       body shouldBe s"$uuid/some.file does not exist"
       status shouldBe NOT_FOUND_404
@@ -104,7 +105,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report bag not found" in {
-    wiring.bagStore.loadFilesXML _ expects uuid once() returning httpException(s"Bag $uuid does not exist in BagStore")
+    app.bagStore.loadFilesXML _ expects uuid once() returning httpException(s"Bag $uuid does not exist in BagStore")
     get(s"$uuid/some.file") {
       body shouldBe s"$uuid does not exist"
       status shouldBe NOT_FOUND_404
@@ -112,9 +113,9 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report depositor not found" in {
-    wiring.bagStore.loadBagInfo _ expects uuid once() returning Success("")
-    wiring.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
-    wiring.bagStore.loadFilesXML _ expects uuid once() returning Success(<files><file filepath="some.file"/></files>)
+    app.bagStore.loadBagInfo _ expects uuid once() returning Success(Map.empty)
+    app.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
+    app.bagStore.loadFilesXML _ expects uuid once() returning Success(<files><file filepath="some.file"/></files>)
     get(s"$uuid/some.file") { // TODO intercept logging to show difference with the next test?
       body shouldBe s"not expected exception"
       status shouldBe INTERNAL_SERVER_ERROR_500
@@ -122,7 +123,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report invalid bag" in {
-    wiring.bagStore.loadFilesXML _ expects uuid once() returning httpException(s"File $uuid/metadata/files.xml does not exist in BagStore")
+    app.bagStore.loadFilesXML _ expects uuid once() returning httpException(s"File $uuid/metadata/files.xml does not exist in BagStore")
     get(s"$uuid/some.file") {
       body shouldBe "not expected exception"
       status shouldBe INTERNAL_SERVER_ERROR_500
