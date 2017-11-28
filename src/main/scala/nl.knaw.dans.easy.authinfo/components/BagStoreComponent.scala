@@ -40,31 +40,22 @@ trait BagStoreComponent {
     }
 
     def loadBagInfo(bagId: UUID): Try[BagInfo] = {
-      loadAsString(bagId, "bag-info.txt").flatMap(parseBagInfo)
+      toURL(bagId, "bag-info.txt").map(loadBagInfo)
     }
 
-    private def loadAsString(bagId: UUID, path: String): Try[String] = {
-      for {
-        url <- toURL(bagId, path)
-        response = Http(url.toString).method("GET").asString
-        _ <- if (response.isSuccess) Success(())
-             else Failure(HttpStatusException(url.toString, response))
-      } yield response.body
-    }
-
-    private def toURL(bagId: UUID, path: String): Try[URL] = Try {
-      val f = URLEncoder.encode(path, "UTF8")
-      baseUri.resolve(s"stores/pdbs/bags/$bagId/$f").toURL // TODO drop 'stores/pdbs' when easy-bag-store#43 not only merged but also versioned
-    }
-
-    private def parseBagInfo(input: String): Try[BagInfo] = Try {
-      input
+    private def loadBagInfo(url: URL): BagInfo = {
+      Http(url.toString).method("GET").asString.body
         .split("\n")
         .map { line =>
           val Array(k, v) = line.split(":", 2)
           (k.trim, v.trim)
         }
         .toMap
+    }
+
+    private def toURL(bagId: UUID, path: String): Try[URL] = Try {
+      val f = URLEncoder.encode(path, "UTF8")
+      baseUri.resolve(s"stores/pdbs/bags/$bagId/$f").toURL // TODO drop 'stores/pdbs' when easy-bag-store#43 not only merged but also versioned
     }
   }
 }
