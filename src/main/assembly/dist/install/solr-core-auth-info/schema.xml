@@ -146,66 +146,11 @@
 
     <field name="store" type="location" indexed="true" stored="true"/>
 
-    <!-- Common metadata fields, named specifically to match up with
-      SolrCell metadata when parsing rich documents such as Word, PDF.
-      Some fields are multiValued only because Tika currently may return
-      multiple values for them. Some metadata is parsed from the documents,
-      but there are some which come from the client context:
-        "content_type": From the HTTP headers of incoming stream
-        "resourcename": From SolrCell request param resource.name
-    -->
-    <field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
-    <field name="subject" type="text_general" indexed="true" stored="true"/>
-    <field name="description" type="text_general" indexed="true" stored="true"/>
-    <field name="comments" type="text_general" indexed="true" stored="true"/>
-    <field name="author" type="text_general" indexed="true" stored="true"/>
-    <field name="keywords" type="text_general" indexed="true" stored="true"/>
-    <field name="category" type="text_general" indexed="true" stored="true"/>
-    <field name="resourcename" type="text_general" indexed="true" stored="true"/>
-    <field name="url" type="text_general" indexed="true" stored="true"/>
-    <field name="content_type" type="string" indexed="true" stored="true" multiValued="true"/>
-    <field name="last_modified" type="pdate" indexed="true" stored="true"/>
-    <field name="links" type="string" indexed="true" stored="true" multiValued="true"/>
-    <field name="_src_" type="string" indexed="false" stored="true"/>
-
-    <!-- Main body of document extracted by SolrCell.
-         NOTE: This field is not indexed by default, since it is also copied to "text"
-         using copyField below. This is to save space. Use this field for returning and
-         highlighting document content. Use the "text" field to search the content. -->
-    <field name="content" type="text_general" indexed="false" stored="true" multiValued="true"/>
-
-    <!-- EASY fields for file indexing -->
-    <!-- first the most important ones -->
-    <!-- note that we use type string because we want to be able to do an exact match -->
-    <field name="easy_dataset_store_id" type="string" indexed="true" stored="true" required="true"/>
-    <field name="easy_dataset_id" type="string" indexed="true" stored="true" required="true"/>
-    <field name="easy_dataset_doi" type="string" indexed="true" stored="true" required="true"/>
-    <field name="easy_dataset_depositor_id" type="string" indexed="true" stored="true" required="true"/>
-    <field name="easy_file_path" type="string" indexed="true" stored="true" required="true"/>
-    <field name="easy_file_accessible_to" type="string" indexed="true" stored="true" required="true"/>
-    <field name="easy_file_mime_type" type="string" indexed="true" stored="true" required="true"/>
-
-    <field name="easy_dataset_date_available" type="date" indexed="true" stored="true" required="true" multiValued="false"/>
-
-    <!-- size should be a number, long so we can search for smaller or larger -->
-    <field name="easy_file_size" type="string" indexed="true" stored="true"/>
-    <field name="easy_file_checksum" type="string" indexed="true" stored="true"/>
-    <!-- multi values more 'free text like' except for audience -->
-    <!-- also possibly we could use exact matches as wel, via *_ss ? -->
-    <field name="easy_dataset_title" type="text_general" indexed="true" stored="true" required="true" multiValued="true"/>
-    <field name="easy_dataset_creator" type="text_general" indexed="true" stored="true" required="true" multiValued="true"/>
-    <!-- note that audience is a 'code', the readable labels are placed in easy_dataset_subject -->
-    <field name="easy_dataset_audience" type="string" indexed="true" stored="true" required="true" multiValued="true"/>
-    <!-- not required -->
-    <field name="easy_file_title" type="text_general" indexed="true" stored="true"/>
-    <field name="easy_dataset_relation" type="text_general" indexed="true" stored="true" multiValued="true"/>
-    <field name="easy_dataset_identifier" type="text_general" indexed="true" stored="true" multiValued="true"/>
-    <field name="easy_dataset_subject" type="text_general" indexed="true" stored="true" multiValued="true"/>
-    <field name="easy_dataset_coverage" type="text_general" indexed="true" stored="true" multiValued="true"/>
-    <field name="easy_dataset_coverage_spatial" type="text_general" indexed="true" stored="true" multiValued="true"/>
-    <field name="easy_dataset_coverage_temporal" type="text_general" indexed="true" stored="true" multiValued="true"/>
-    <field name="easy_dataset_subject_abr" type="string" indexed="true" stored="true" multiValued="true"/>
-    <field name="easy_dataset_coverage_temporal_abr" type="string" indexed="true" stored="true" multiValued="true"/>
+    <!-- EASY fields for auth-info indexing cache -->
+    <field name="easy_owner" type="string" indexed="true" stored="true" required="true"/>
+    <field name="easy_accessible_to" type="string" indexed="true" stored="true" required="true"/>
+    <field name="easy_visible_to" type="string" indexed="true" stored="true" required="true"/>
+    <field name="easy_date_available" type="date" indexed="true" stored="true" required="true" multiValued="false"/>
     <!-- End of EASY fields -->
 
     <!-- catchall field, containing all other searchable text fields (implemented
@@ -309,16 +254,6 @@
     <!-- The file path might contain important words for the finding the file -->
     <copyField source="easy_file_path" dest="text"/>
     <!-- End of EASY field copying -->
-
-    <!-- Text fields from SolrCell to search by default in our catch-all field -->
-    <copyField source="title" dest="text"/>
-    <copyField source="author" dest="text"/>
-    <copyField source="description" dest="text"/>
-    <copyField source="keywords" dest="text"/>
-    <copyField source="content" dest="text"/>
-    <copyField source="content_type" dest="text"/>
-    <copyField source="resourcename" dest="text"/>
-    <copyField source="url" dest="text"/>
 
     <!-- Copy numeric fields to *PointFields implementation -->
     <copyField source="*_i" dest="*_pi"/>
