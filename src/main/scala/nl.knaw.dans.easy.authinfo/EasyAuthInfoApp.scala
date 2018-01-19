@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.authinfo
 import java.nio.file.Path
 import java.util.UUID
 
-import nl.knaw.dans.easy.authinfo.EasyAuthInfoApp._
 import nl.knaw.dans.easy.authinfo.components.FileRights
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.JsonAST.JValue
@@ -32,7 +31,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
   def rightsOf(bagId: UUID, path: Path): Try[Option[JValue]] = {
     bagStore
       .loadFilesXML(bagId)
-      .map(getFileNode(_,path))
+      .map(getFileNode(_, path))
       .flatMap {
         case Some(fn) => collectInfoInJson(bagId, path, fn)
         case None => Success(None)

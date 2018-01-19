@@ -15,8 +15,6 @@
  */
 package nl.knaw.dans.easy.authinfo.components
 
-import java.nio.file.Paths
-
 import nl.knaw.dans.easy.authinfo.TestSupportFixture
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
 

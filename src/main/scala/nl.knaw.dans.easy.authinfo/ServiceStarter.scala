@@ -17,8 +17,8 @@ package nl.knaw.dans.easy.authinfo
 
 import java.nio.file.Paths
 
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.error.TryExtensions
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.daemon.{ Daemon, DaemonContext }
 
 class ServiceStarter extends Daemon with DebugEnhancedLogging {
