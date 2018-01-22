@@ -41,7 +41,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       case Success(Some(doc)) => Success(Some(FileItem.toJson(doc)))
       case Success(None) => fromBagStore(bagId, path)
       case Failure(t) => Failure(t)
-        logger.warn(t.getMessage,t)// TODO no stack / more info?
+        logger.warn(t.getMessage, t) // TODO no stack / more info?
         fromBagStore(bagId, path)
     }
   }

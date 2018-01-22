@@ -23,7 +23,7 @@ import nl.knaw.dans.easy.authinfo.components.Solr.SolrLiterals
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.solr.common.SolrDocument
 import org.json4s.JsonAST
-import org.json4s.JsonAST.{ JObject, JValue }
+import org.json4s.JsonAST.JObject
 import org.json4s.JsonDSL._
 
 import scala.collection.JavaConverters._
@@ -37,8 +37,9 @@ case class FileItem(id: UUID, path: Path, owner: String, rights: FileRights, dat
     ("easy_accessible_to", rights.accessibleTo.toString),
     ("easy_visible_to", rights.visibleTo.toString),
   )
-  val json: JValue = solrLiterals
+  val json: JObject = solrLiterals
     .map { case (key, value) => (solr2jsonKey(key), value) }
+    .foldLeft(JObject())(_ ~ _)
 }
 object FileItem {
   private val solr2JsonKeys = Map[String, String](
@@ -49,17 +50,14 @@ object FileItem {
     "easy_date_available" -> "dateAvailable"
   )
 
-  private def solr2jsonKey(key: String) = key match {
-    case "id" => "itemId"
-    case s => s.replace("easy_","")
-  }
+  private def solr2jsonKey(key: String) = solr2JsonKeys.getOrElse(key, key)
 
   def toJson(solrDocument: SolrDocument): JsonAST.JObject = {
     val fieldValueMap = solrDocument.getFieldValueMap
     fieldValueMap
       .keySet()
       .asScala // asScala on the map throws UnsupportedOperationException
-      .filter(!_.matches("(id|easy_.*)")) // filter on the solr query would spread knowledge
+      .filter(_.matches("(id|easy_.*)")) // filter on the solr query would spread knowledge
       .map(key => (solr2jsonKey(key), fieldValueMap.get(key).toString))
       .foldLeft(JObject())(_ ~ _)
   }
