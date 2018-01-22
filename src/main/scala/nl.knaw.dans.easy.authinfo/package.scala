@@ -18,8 +18,13 @@ package nl.knaw.dans.easy
 import java.nio.file.Path
 
 import com.google.common.net.UrlEscapers
+import nl.knaw.dans.easy.authinfo.components.Solr.SolrLiterals
+import org.apache.solr.common.util.NamedList
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scala.util.{ Failure, Success, Try }
 import scalaj.http.HttpResponse
 
 package object authinfo {
@@ -33,5 +38,48 @@ package object authinfo {
 
   def escapePath(path: Path): String = {
     path.asScala.map(_.toString).map(pathEscaper.escape).mkString("/")
+  }
+
+  case class SolrStatusException(namedList: NamedList[AnyRef])
+    extends Exception(s"solr returned: ${ namedList.asShallowMap().values().toArray().mkString }")
+
+  case class SolrBadRequestException(msg: String, cause: Throwable)
+    extends Exception(msg, cause)
+
+  case class SolrDeleteException(query: String, cause: Throwable)
+    extends Exception(s"solr delete [$query] failed with ${ cause.getMessage }", cause)
+
+  case class SolrSearchException(query: String, cause: Throwable)
+    extends Exception(s"solr query [$query] failed with ${ cause.getMessage }", cause)
+
+  case class SolrUpdateException(literals: SolrLiterals, cause: Throwable)
+    extends Exception(s"solr update of $literals failed with ${ cause.getMessage }", cause)
+
+  case class SolrCommitException(cause: Throwable)
+    extends Exception(cause.getMessage, cause)
+
+  case class MixedResultsException[T](results: Seq[T], thrown: Throwable)
+  // TODO evolve into candidate for dans.lib.error with takeUntilFailure
+    extends Exception(thrown.getMessage, thrown)
+  implicit class RichTryStream[T](val left: Seq[Try[T]]) extends AnyVal {
+
+    /** Typical usage: toStream.map(TrySomething).takeUntilFailure */
+    def takeUntilFailure: Try[Seq[T]] = {
+      val it = left.iterator
+      val b = mutable.ListBuffer[T]()
+
+      @tailrec
+      def inner(): Try[Seq[T]] = {
+        if (!it.hasNext) Success(b)
+        else it.next() match {
+          case Success(y) =>
+            b += y
+            inner()
+          case Failure(t) => Failure(MixedResultsException(b, t))
+        }
+      }
+
+      inner()
+    }
   }
 }

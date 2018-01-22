@@ -17,7 +17,9 @@ package nl.knaw.dans.easy.authinfo
 
 import java.net.URI
 
-import nl.knaw.dans.easy.authinfo.components.BagStoreComponent
+import nl.knaw.dans.easy.authinfo.components.{ BagStoreComponent, Solr, SolrImpl }
+import org.apache.solr.client.solrj.SolrClient
+import org.apache.solr.client.solrj.impl.HttpSolrClient
 
 /**
  * Initializes and wires together the components of this application.
@@ -31,5 +33,15 @@ trait ApplicationWiring extends BagStoreComponent {
 
   override val bagStore: BagStore = new BagStore {
     override val baseUri: URI = new URI(configuration.properties.getString("bag-store.url"))
+  }
+
+  val solr: Solr = {
+    Option(configuration.properties.getString("solr.url")) match {
+      case None => new Solr() {}
+      case Some(s) =>
+        new SolrImpl() {
+          override val solrClient: SolrClient = new HttpSolrClient.Builder(s).build()
+        }
+    }
   }
 }
