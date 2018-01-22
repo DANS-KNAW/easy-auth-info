@@ -18,27 +18,55 @@ package nl.knaw.dans.easy.authinfo
 import java.nio.file.Path
 import java.util.UUID
 
-import nl.knaw.dans.easy.authinfo.components.FileRights
+import nl.knaw.dans.easy.authinfo.Command.FeedBackMessage
+import nl.knaw.dans.easy.authinfo.components.{ FileItem, FileRights }
+import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.JsonAST.JValue
-import org.json4s.JsonDSL._
 
 import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, Node }
 
 trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
 
+  def delete(query: String): Try[FeedBackMessage] = {
+    solr
+      .delete(query)
+      .flatMap(_ => solr.commit())
+      .map(_ => s"Deleted documents for query $query ")
+  }
+
   def rightsOf(bagId: UUID, path: Path): Try[Option[JValue]] = {
+    solr.search(s"$bagId/$path") match {
+      case Success(Some(doc)) => Success(Some(FileItem.toJson(doc)))
+      case Success(None) => fromBagStore(bagId, path)
+      case Failure(t) => Failure(t)
+        logger.warn(t.getMessage,t)// TODO no stack / more info?
+        fromBagStore(bagId, path)
+    }
+  }
+
+  private def fromBagStore(bagId: UUID, path: Path) = {
+    itemFromFilesXML(bagId, path) match {
+      case Failure(t) => Failure(t)
+      case Success(None) => Success(None)
+      case Success(Some(filesXmlItem)) => collectInfo(bagId, path, filesXmlItem) match {
+        case Failure(t) => Failure(t)
+        case Success(fileItem) =>
+          solr.submit(fileItem.solrLiterals) // can survive without the cache
+            .doIfFailure { case e => logger.warn(e.getMessage) }
+          Success(Some(fileItem.json))
+      }
+    }
+  }
+
+  private def itemFromFilesXML(bagId: UUID, path: Path) = {
     bagStore
       .loadFilesXML(bagId)
       .map(getFileNode(_, path))
-      .flatMap {
-        case Some(fn) => collectInfoInJson(bagId, path, fn)
-        case None => Success(None)
-      }
   }
 
-  private def collectInfoInJson(bagId: UUID, path: Path, fn: Node) = {
+  private def collectInfo(bagId: UUID, path: Path, fn: Node) = {
     for {
       ddm <- bagStore.loadDDM(bagId)
       ddmProfile <- getTag(ddm, "profile")
@@ -46,13 +74,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       rights <- FileRights.get(ddmProfile, fn)
       bagInfo <- bagStore.loadBagInfo(bagId)
       owner <- getDepositor(bagInfo)
-    } yield Some {
-      ("itemId" -> s"$bagId/$path") ~
-        ("owner" -> owner) ~
-        ("dateAvailable" -> dateAvailable) ~
-        ("accessibleTo" -> rights.accessibleTo) ~
-        ("visibleTo" -> rights.visibleTo)
-    }
+    } yield FileItem(bagId, path, owner, rights, dateAvailable)
   }
 
   private def getTag(node: Node, tag: String): Try[Node] = {
