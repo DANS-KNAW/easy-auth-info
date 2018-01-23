@@ -5,10 +5,7 @@ import java.nio.file.Paths
 import nl.knaw.dans.easy.authinfo.TestSupportFixture
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
 import org.apache.solr.common.SolrDocument
-import org.json4s._
 import org.json4s.native.JsonMethods._
-
-import scala.collection.immutable.HashMap
 
 class FileItemSpec extends TestSupportFixture {
 
@@ -34,7 +31,7 @@ class FileItemSpec extends TestSupportFixture {
       addField("easy_visible_to", "ANONYMOUS")
       addField("solr_extras", "abcd")
     }
-    val expected = parse(
+    val expected =
       s"""{
          |  "itemId":"$randomUUID/some/file.txt",
          |  "owner":"someone",
@@ -42,12 +39,7 @@ class FileItemSpec extends TestSupportFixture {
          |  "accessibleTo":"KNOWN",
          |  "visibleTo":"ANONYMOUS"
          |}""".stripMargin
-    ).values.asInstanceOf[HashMap.HashTrieMap[String, String]]
 
-    val actual = FileItem.toJson(doc).values
-
-    actual.keySet shouldBe expected.keySet
-    for (key <- expected.keySet)
-      actual(key.toString) shouldBe expected(key)
+    checkSameHashMaps(expected, FileItem.toJson(doc))
   }
 }

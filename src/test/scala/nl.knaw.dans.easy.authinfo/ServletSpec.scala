@@ -19,15 +19,17 @@ import java.util
 import java.util.UUID
 
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
+import nl.knaw.dans.easy.authinfo.components.{ Solr, SolrImpl }
 import org.apache.commons.configuration.PropertiesConfiguration
-import org.apache.solr.client.solrj.response.{ QueryResponse, UpdateResponse }
+import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.client.solrj.{ SolrClient, SolrRequest, SolrResponse }
-import org.apache.solr.common.{ SolrDocument, SolrDocumentList, SolrInputDocument }
 import org.apache.solr.common.params.SolrParams
 import org.apache.solr.common.util.NamedList
+import org.apache.solr.common.{ SolrDocument, SolrDocumentList }
 import org.eclipse.jetty.http.HttpStatus._
 import org.scalamock.scalatest.MockFactory
 import org.scalatra.test.scalatest.ScalatraSuite
+import org.json4s.native.JsonMethods.parse
 
 import scala.util.{ Failure, Success }
 import scala.xml.Elem
@@ -46,11 +48,11 @@ class ServletSpec extends TestSupportFixture with ServletFixture
       addProperty("bag-store.url", "http://localhost:20110/")
       addProperty("solr.url", "http://hostThatDoesNotExist")
     })
-    override lazy val cache: Cache = new SolrCache {
+    override val solr: Solr = new SolrImpl() {
       override val solrClient: SolrClient = new SolrClient() {
         // can't use mock because SolrClient has a final method
 
-        override def query (params: SolrParams): QueryResponse = new QueryResponse(){
+        override def query(params: SolrParams): QueryResponse = new QueryResponse() {
           override def getResults: SolrDocumentList = mockDocList
         }
 
@@ -105,26 +107,26 @@ class ServletSpec extends TestSupportFixture with ServletFixture
 
   it should "return values from the cache" in {
     mockDocList.isEmpty _ expects() returning false
-    mockDocList.iterator _ expects() returning new util.Iterator[SolrDocument](){
+    mockDocList.iterator _ expects() returning new util.Iterator[SolrDocument]() {
       override def hasNext: Boolean = true
 
-      override def next(): SolrDocument = new SolrDocument(){
+      override def next(): SolrDocument = new SolrDocument() {
         addField("id", s"$uuid/some.file")
         addField("easy_owner", "someone")
-        addField("easy_date_available","1992-07-30")
-        addField("easy_accessible_to","KNOWN")
-        addField("easy_visible_to","ANONYMOUS")
+        addField("easy_date_available", "1992-07-30")
+        addField("easy_accessible_to", "KNOWN")
+        addField("easy_visible_to", "ANONYMOUS")
       }
     }
     get(s"$uuid/some.file") {
-      body shouldBe
-        s"""{
-           |  "itemId":"$uuid/some.file",
-           |  "owner":"someone",
-           |  "dateAvailable":"1992-07-30",
-           |  "accessibleTo":"KNOWN",
-           |  "visibleTo":"ANONYMOUS"
-           |}""".stripMargin
+      val expected = s"""{
+         |  "itemId":"$uuid/some.file",
+         |  "owner":"someone",
+         |  "dateAvailable":"1992-07-30",
+         |  "accessibleTo":"KNOWN",
+         |  "visibleTo":"ANONYMOUS"
+         |}""".stripMargin
+      checkSameHashMaps(expected, parse(body))
       status shouldBe OK_200
     }
   }

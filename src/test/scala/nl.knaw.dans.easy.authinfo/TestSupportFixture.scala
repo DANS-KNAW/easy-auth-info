@@ -19,7 +19,11 @@ import java.nio.file.{ Files, Path, Paths }
 import java.util.UUID
 
 import org.apache.commons.io.FileUtils
+import org.json4s
+import org.json4s.native.JsonMethods.parse
 import org.scalatest.{ BeforeAndAfterEach, FlatSpec, Inside, Matchers }
+
+import scala.collection.immutable.HashMap
 
 trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeAndAfterEach {
 
@@ -30,7 +34,16 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeA
     path
   }
 
-  val randomUUID = UUID.randomUUID()
+  val randomUUID: UUID = UUID.randomUUID()
   val uuidCentaur: UUID = UUID.fromString("9da0541a-d2c8-432e-8129-979a9830b427")
   val uuidAnonymized: UUID = UUID.fromString("1afcc4e9-2130-46cc-8faf-2663e199b218")
+
+  def checkSameHashMaps(expectedJsonString: String, actual: json4s.JValue): Unit = {
+    val expectedMap = parse(expectedJsonString).values.asInstanceOf[HashMap.HashTrieMap[String, String]]
+    val actualMap = actual.values.asInstanceOf[HashMap.HashTrieMap[String, String]]
+
+    actualMap.keySet shouldBe expectedMap.keySet
+    for (key <- expectedMap.keySet)
+      actualMap(key.toString) shouldBe expectedMap(key)
+  }
 }
