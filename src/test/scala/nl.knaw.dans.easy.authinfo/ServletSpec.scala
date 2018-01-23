@@ -15,10 +15,16 @@
  */
 package nl.knaw.dans.easy.authinfo
 
+import java.util
 import java.util.UUID
 
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
 import org.apache.commons.configuration.PropertiesConfiguration
+import org.apache.solr.client.solrj.response.{ QueryResponse, UpdateResponse }
+import org.apache.solr.client.solrj.{ SolrClient, SolrRequest, SolrResponse }
+import org.apache.solr.common.{ SolrDocument, SolrDocumentList, SolrInputDocument }
+import org.apache.solr.common.params.SolrParams
+import org.apache.solr.common.util.NamedList
 import org.eclipse.jetty.http.HttpStatus._
 import org.scalamock.scalatest.MockFactory
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -31,12 +37,29 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   with ScalatraSuite
   with MockFactory {
 
+  private val mockDocList = mock[SolrDocumentList]
+
   private val app = new EasyAuthInfoApp {
     // mocking at a low level to test the chain of error handling
     override val bagStore: BagStore = mock[BagStore]
     override lazy val configuration: Configuration = new Configuration("", new PropertiesConfiguration() {
       addProperty("bag-store.url", "http://localhost:20110/")
+      addProperty("solr.url", "http://hostThatDoesNotExist")
     })
+    override lazy val cache: Cache = new SolrCache {
+      override val solrClient: SolrClient = new SolrClient() {
+        // can't use mock because SolrClient has a final method
+
+        override def query (params: SolrParams): QueryResponse = new QueryResponse(){
+          override def getResults: SolrDocumentList = mockDocList
+        }
+
+        override def close(): Unit = ()
+
+        override def request(solrRequest: SolrRequest[_ <: SolrResponse], s: String): NamedList[AnyRef] =
+          throw new Exception("not expected")
+      }
+    }
   }
   private val uuid = UUID.randomUUID()
   private val openAccessDDM: Elem =
@@ -77,6 +100,32 @@ class ServletSpec extends TestSupportFixture with ServletFixture
            |}""".stripMargin
       status shouldBe OK_200
       // variations are tested with FileRightsSpec
+    }
+  }
+
+  it should "return values from the cache" in {
+    mockDocList.isEmpty _ expects() returning false
+    mockDocList.iterator _ expects() returning new util.Iterator[SolrDocument](){
+      override def hasNext: Boolean = true
+
+      override def next(): SolrDocument = new SolrDocument(){
+        addField("id", s"$uuid/some.file")
+        addField("easy_owner", "someone")
+        addField("easy_date_available","1992-07-30")
+        addField("easy_accessible_to","KNOWN")
+        addField("easy_visible_to","ANONYMOUS")
+      }
+    }
+    get(s"$uuid/some.file") {
+      body shouldBe
+        s"""{
+           |  "itemId":"$uuid/some.file",
+           |  "owner":"someone",
+           |  "dateAvailable":"1992-07-30",
+           |  "accessibleTo":"KNOWN",
+           |  "visibleTo":"ANONYMOUS"
+           |}""".stripMargin
+      status shouldBe OK_200
     }
   }
 
