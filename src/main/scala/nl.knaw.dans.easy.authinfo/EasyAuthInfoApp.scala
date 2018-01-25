@@ -20,9 +20,7 @@ import java.util.UUID
 
 import nl.knaw.dans.easy.authinfo.Command.FeedBackMessage
 import nl.knaw.dans.easy.authinfo.components.{ FileItem, FileRights }
-import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.JsonAST.JValue
 
 import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, Node }
@@ -36,11 +34,11 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       .map(_ => s"Deleted documents for query $query ")
   }
 
-  def rightsOf(bagId: UUID, path: Path): Try[Option[JValue]] = {
+  def rightsOf(bagId: UUID, path: Path): Try[Option[Result]] = {
     solr.search(s"$bagId/$path") match {
-      case Success(Some(doc)) => Success(Some(FileItem.toJson(doc)))
+      case Success(Some(doc)) => Success(Some(Result(FileItem.toJson(doc), None)))
       case Success(None) => fromBagStore(bagId, path)
-      case Failure(t) => Failure(t)
+      case Failure(t) =>
         logger.warn(t.getMessage, t) // TODO no stack / more info?
         fromBagStore(bagId, path)
     }
@@ -49,13 +47,12 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
   private def fromBagStore(bagId: UUID, path: Path) = {
     itemFromFilesXML(bagId, path) match {
       case Failure(t) => Failure(t)
-      case Success(None) => Success(None)
+      case Success(None) => Success(None) // TODO can we cache repeatedly requested but not found bags/files?
       case Success(Some(filesXmlItem)) => collectInfo(bagId, path, filesXmlItem) match {
         case Failure(t) => Failure(t)
         case Success(fileItem) =>
-          solr.submit(fileItem.solrLiterals) // can survive without the cache
-            .doIfFailure { case e => logger.warn(e.getMessage) }
-          Success(Some(fileItem.json))
+          val cacheUpdate = Some(solr.submit(fileItem.solrLiterals))
+          Success(Some(Result(fileItem.json, cacheUpdate)))
       }
     }
   }

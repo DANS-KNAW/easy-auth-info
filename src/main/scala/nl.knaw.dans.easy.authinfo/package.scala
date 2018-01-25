@@ -19,7 +19,9 @@ import java.nio.file.Path
 
 import com.google.common.net.UrlEscapers
 import nl.knaw.dans.easy.authinfo.components.Solr.SolrLiterals
+import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.util.NamedList
+import org.json4s.JsonAST.JValue
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
@@ -30,6 +32,12 @@ import scalaj.http.HttpResponse
 package object authinfo {
 
   type BagInfo = Map[String, String]
+
+  /**
+   * @param authInfo authorisation information
+   * @param cacheUpdate None: not updated because it was found
+   */
+  case class Result(authInfo: JValue, cacheUpdate: Option[Try[UpdateResponse]])
 
   case class HttpStatusException(msg: String, response: HttpResponse[String])
     extends Exception(s"$msg - ${ response.statusLine }, details: ${ response.body }")

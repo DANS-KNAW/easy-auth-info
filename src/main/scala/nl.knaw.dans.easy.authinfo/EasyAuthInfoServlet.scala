@@ -52,9 +52,12 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
     multiParams("splat").find(_.trim.nonEmpty).map(Paths.get(_))
   }
 
-  private def respond(uuid: UUID, path: Path, rights: Try[Option[JValue]]) = {
+  private def respond(uuid: UUID, path: Path, rights: Try[Option[Result]]) = {
     rights match {
-      case Success(Some(json)) => Ok(pretty(render(json)))
+      case Success(Some(Result(json,Some(Failure(t))))) =>
+        logger.warn(s"cache update failed for [$uuid/$path] with ${t.getMessage}",t)
+        Ok(pretty(render(json)))
+      case Success(Some(Result(json,_))) => Ok(pretty(render(json)))
       case Success(None) => NotFound(s"$uuid/$path does not exist")
       case Failure(HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _))) => ServiceUnavailable(message)
       case Failure(HttpStatusException(message, HttpResponse(_, REQUEST_TIMEOUT_408, _))) => RequestTimeout(message)
