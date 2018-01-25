@@ -21,15 +21,17 @@ import java.util.UUID
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
 import nl.knaw.dans.easy.authinfo.components.{ Solr, SolrImpl }
 import org.apache.commons.configuration.PropertiesConfiguration
-import org.apache.solr.client.solrj.response.QueryResponse
+import org.apache.solr.client.solrj.response.{ QueryResponse, UpdateResponse }
 import org.apache.solr.client.solrj.{ SolrClient, SolrRequest, SolrResponse }
 import org.apache.solr.common.params.SolrParams
 import org.apache.solr.common.util.NamedList
-import org.apache.solr.common.{ SolrDocument, SolrDocumentList }
+import org.apache.solr.common.{ SolrDocument, SolrDocumentList, SolrInputDocument }
 import org.eclipse.jetty.http.HttpStatus._
-import org.scalamock.scalatest.MockFactory
-import org.scalatra.test.scalatest.ScalatraSuite
 import org.json4s.native.JsonMethods.parse
+import org.scalamock.handlers.CallHandler
+import org.scalamock.scalatest.MockFactory
+import org.scalamock.util.Defaultable
+import org.scalatra.test.scalatest.ScalatraSuite
 
 import scala.util.{ Failure, Success }
 import scala.xml.Elem
@@ -56,6 +58,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
           override def getResults: SolrDocumentList = mockDocList
         }
 
+        override def add(doc: SolrInputDocument): UpdateResponse = mockUpdateResponse
+
         override def close(): Unit = ()
 
         override def request(solrRequest: SolrRequest[_ <: SolrResponse], s: String): NamedList[AnyRef] =
@@ -63,6 +67,45 @@ class ServletSpec extends TestSupportFixture with ServletFixture
       }
     }
   }
+
+  implicit val defaultForRawTypeMethod: Defaultable[NamedList[_]] = new Defaultable[NamedList[_]] {
+    // http://scalamock.org/user-guide/advanced_topics/#raw-types
+    override val default: NamedList[_] = null
+  }
+  private val mockUpdateResponse = mock[UpdateResponse]
+
+  private def expectsDocIsAddedToCache = {
+    mockUpdateResponse.getStatus _ expects() repeat 1 returning 0
+  }
+
+  private def expectsDocIsNotAddedToCache: CallHandler[Int] = {
+    // implicitly not expected calls might not break a test
+    mockUpdateResponse.getStatus _ expects() repeat 0
+  }
+
+  private def expectsDocIsNotSearchedInCache = {
+    // implicitly not expected calls might not break a test
+    mockDocList.isEmpty _ expects() repeat 0
+  }
+
+  private def expectsDocIsNotFoundInCache = {
+    mockDocList.isEmpty _ expects() once() returning true
+  }
+
+  private def expectsDocFoundInCahce(document: SolrDocument) = {
+    val cachedDoc = new util.Iterator[SolrDocument]() {
+
+      // won't cause a never ending loop as the servlet under test expects at most one
+      override def hasNext: Boolean = true
+
+      override def next(): SolrDocument = {
+        document
+      }
+    }
+    mockDocList.isEmpty _ expects() returning false
+    mockDocList.iterator _ expects() returning cachedDoc
+  }
+
   private val uuid = UUID.randomUUID()
   private val openAccessDDM: Elem =
     <ddm:DDM>
@@ -91,6 +134,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
         </file>
       </files>
     )
+    expectsDocIsNotFoundInCache
+    expectsDocIsAddedToCache
     get(s"$uuid/some.file") {
       body shouldBe
         s"""{
@@ -106,26 +151,24 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "return values from the cache" in {
-    mockDocList.isEmpty _ expects() returning false
-    mockDocList.iterator _ expects() returning new util.Iterator[SolrDocument]() {
-      override def hasNext: Boolean = true
-
-      override def next(): SolrDocument = new SolrDocument() {
-        addField("id", s"$uuid/some.file")
-        addField("easy_owner", "someone")
-        addField("easy_date_available", "1992-07-30")
-        addField("easy_accessible_to", "KNOWN")
-        addField("easy_visible_to", "ANONYMOUS")
-      }
+    val document = new SolrDocument() {
+      addField("id", s"$uuid/some.file")
+      addField("easy_owner", "someone")
+      addField("easy_date_available", "1992-07-30")
+      addField("easy_accessible_to", "KNOWN")
+      addField("easy_visible_to", "ANONYMOUS")
     }
+    expectsDocFoundInCahce(document)
+    expectsDocIsNotAddedToCache
     get(s"$uuid/some.file") {
-      val expected = s"""{
-         |  "itemId":"$uuid/some.file",
-         |  "owner":"someone",
-         |  "dateAvailable":"1992-07-30",
-         |  "accessibleTo":"KNOWN",
-         |  "visibleTo":"ANONYMOUS"
-         |}""".stripMargin
+      val expected =
+        s"""{
+           |  "itemId":"$uuid/some.file",
+           |  "owner":"someone",
+           |  "dateAvailable":"1992-07-30",
+           |  "accessibleTo":"KNOWN",
+           |  "visibleTo":"ANONYMOUS"
+           |}""".stripMargin
       checkSameHashMaps(expected, parse(body))
       status shouldBe OK_200
     }
@@ -133,6 +176,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
 
   it should "report file not found" in {
     app.bagStore.loadFilesXML _ expects uuid once() returning Success(<files/>)
+    expectsDocIsNotFoundInCache
+    expectsDocIsNotAddedToCache
     get(s"$uuid/some.file") {
       body shouldBe s"$uuid/some.file does not exist"
       status shouldBe NOT_FOUND_404
@@ -140,6 +185,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report invalid uuid" in {
+    expectsDocIsNotSearchedInCache
+    expectsDocIsNotAddedToCache
     get("1-2-3-4-5-6/some.file") {
       body shouldBe "Invalid UUID string: 1-2-3-4-5-6"
       status shouldBe BAD_REQUEST_400
@@ -147,6 +194,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report missing path" in {
+    expectsDocIsNotSearchedInCache
+    expectsDocIsNotAddedToCache
     get(s"$uuid/") {
       body shouldBe "file path is empty"
       status shouldBe BAD_REQUEST_400
@@ -155,6 +204,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
 
   it should "report bag not found" in {
     app.bagStore.loadFilesXML _ expects uuid once() returning httpException(s"Bag $uuid does not exist in BagStore")
+    expectsDocIsNotFoundInCache
+    expectsDocIsNotAddedToCache
     get(s"$uuid/some.file") {
       body shouldBe s"$uuid does not exist"
       status shouldBe NOT_FOUND_404
@@ -165,6 +216,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     app.bagStore.loadBagInfo _ expects uuid once() returning Success(Map.empty)
     app.bagStore.loadDDM _ expects uuid once() returning Success(openAccessDDM)
     app.bagStore.loadFilesXML _ expects uuid once() returning Success(<files><file filepath="some.file"/></files>)
+    expectsDocIsNotFoundInCache
+    expectsDocIsNotAddedToCache
     get(s"$uuid/some.file") { // TODO intercept logging to show difference with the next test?
       body shouldBe s"not expected exception"
       status shouldBe INTERNAL_SERVER_ERROR_500
@@ -172,6 +225,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report invalid bag" in {
+    expectsDocIsNotFoundInCache
+    expectsDocIsNotAddedToCache
     app.bagStore.loadFilesXML _ expects uuid once() returning httpException(s"File $uuid/metadata/files.xml does not exist in BagStore")
     get(s"$uuid/some.file") {
       body shouldBe "not expected exception"
