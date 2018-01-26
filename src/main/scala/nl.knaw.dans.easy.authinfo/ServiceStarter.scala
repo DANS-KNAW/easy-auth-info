@@ -35,9 +35,7 @@ class ServiceStarter extends Daemon with DebugEnhancedLogging {
 
   override def start(): Unit = {
     logger.info("Starting service...")
-    app.init()
-      .flatMap(_ => service.start())
-      .unsafeGetOrThrow
+    service.start()
     logger.info("Service started.")
   }
 

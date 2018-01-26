@@ -47,7 +47,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
   private def fromBagStore(bagId: UUID, path: Path) = {
     itemFromFilesXML(bagId, path) match {
       case Failure(t) => Failure(t)
-      case Success(None) => Success(None) // TODO can we cache repeatedly requested but not found bags/files?
+      case Success(None) => Success(None) // TODO cache repeatedly requested but not found bags/files?
       case Success(Some(filesXmlItem)) => collectInfo(bagId, path, filesXmlItem) match {
         case Failure(t) => Failure(t)
         case Success(fileItem) =>
@@ -92,15 +92,8 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
     )
   }
 
-  // TODO remove init and close (+ AutoCloseable interface)
-  def init(): Try[Unit] = {
-    // Do any initialization of the application here. Typical examples are opening
-    // databases or connecting to other services.
-    Success(())
-  }
-
   override def close(): Unit = {
-
+    solr.close()
   }
 }
 

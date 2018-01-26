@@ -76,6 +76,10 @@ trait SolrImpl extends Solr with DebugEnhancedLogging {
       .recoverWith { case t => Failure(SolrCommitException(t)) }
   }
 
+  override def close(): Try[Unit] = {
+    Try(solrClient.close())
+  }
+
   private def isParseException(t: HttpSolrClient.RemoteSolrException) = {
     t.getRootThrowable.endsWith("ParseException")
   }

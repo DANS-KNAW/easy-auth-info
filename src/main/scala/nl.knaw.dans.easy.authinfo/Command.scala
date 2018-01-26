@@ -19,6 +19,7 @@ import java.io.FileNotFoundException
 import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
+import nl.knaw.dans.lib.error
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.native.JsonMethods.{ pretty, render }
@@ -37,13 +38,8 @@ object Command extends App with DebugEnhancedLogging {
   }
   val app = EasyAuthInfoApp(configuration)
 
-  managed(app)
-    .acquireAndGet(app => {
-      for {
-        _ <- app.init()
-        msg <- runSubcommand(app)
-      } yield msg
-    })
+  error.TryExtensions(managed(app)
+    .acquireAndGet(runSubcommand))
     .doIfSuccess(msg => println(s"OK: $msg"))
     .doIfFailure { case e => logger.error(e.getMessage, e) }
     .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
@@ -64,7 +60,6 @@ object Command extends App with DebugEnhancedLogging {
       subPath = fullPath.relativize(root)
       rightsOf <- app.rightsOf(uuid, subPath)
     } yield rightsOf match {
-      // TODO how to report cache problems?
       case Some(Result(rights, _)) => Success(pretty(render(rights)))
       case None => Failure(new FileNotFoundException(fullPath.toString))
     }).flatten
@@ -72,6 +67,7 @@ object Command extends App with DebugEnhancedLogging {
 
   private def runAsService(app: EasyAuthInfoApp): Try[FeedBackMessage] = Try {
     val service = new EasyAuthInfoService(configuration.properties.getInt("daemon.http.port"), app)
+    // TODO how to report cache problems?
     Runtime.getRuntime.addShutdownHook(new Thread("service-shutdown") {
       override def run(): Unit = {
         service.stop()

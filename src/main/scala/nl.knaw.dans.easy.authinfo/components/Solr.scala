@@ -20,6 +20,9 @@ trait Solr {
 
   def commit(): Try[UpdateResponse] =
     Failure(new NotImplementedError())
+
+  def close(): Try[Unit] =
+    Success(())
 }
 object Solr {
   type SolrLiterals = Seq[(String, String)]
