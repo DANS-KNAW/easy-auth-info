@@ -15,6 +15,7 @@
  */
 package nl.knaw.dans.easy.authinfo.components
 
+import nl.knaw.dans.easy.authinfo.InvalidBagException
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
 
 import scala.util.{ Failure, Success, Try }
@@ -46,10 +47,10 @@ object FileRights {
         .map(_.toUpperCase)
       )
     if(accessibleTo.isEmpty)
-      Failure(new Exception("<accessibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"))
+      Failure(InvalidBagException("<accessibleToRights> not found in files.xml nor <ddm:accessRights> in dataset.xml"))
     else if (!allowedValues.contains(accessibleTo.getOrElse("?")))
          // <dcterms:accessRights> (synonym for <accessibleToRights>) content not validated by XSD
-           Failure(new Exception(s"<dcterms:accessRights> [${accessibleTo.getOrElse("?")}] in files.xml should be one of: ${allowedValues.mkString(", ")}"))
+           Failure(InvalidBagException(s"<dcterms:accessRights> [${accessibleTo.getOrElse("?")}] in files.xml should be one of: ${allowedValues.mkString(", ")}"))
     else {
       val visibleTo = getValue("visibleToRights").getOrElse(ANONYMOUS.toString)
       Success(FileRights(accessibleTo.getOrElse("?"), visibleTo))

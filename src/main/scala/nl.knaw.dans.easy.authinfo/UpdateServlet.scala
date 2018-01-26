@@ -42,9 +42,6 @@ class UpdateServlet(app: EasyAuthInfoApp) extends ScalatraServlet with DebugEnha
         case HttpStatusException(message, r: HttpResponse[String]) if r.code == NOT_FOUND_404 => NotFound(message)
         case HttpStatusException(message, r: HttpResponse[String]) if r.code == SERVICE_UNAVAILABLE_503 => ServiceUnavailable(message)
         case HttpStatusException(message, r: HttpResponse[String]) if r.code == REQUEST_TIMEOUT_408 => RequestTimeout(message)
-        case MixedResultsException(_, HttpStatusException(message, r: HttpResponse[String])) if r.code == NOT_FOUND_404 => NotFound(msgPrefix + message)
-        case MixedResultsException(_, HttpStatusException(message, r: HttpResponse[String])) if r.code == SERVICE_UNAVAILABLE_503 => ServiceUnavailable(msgPrefix + message)
-        case MixedResultsException(_, HttpStatusException(message, r: HttpResponse[String])) if r.code == REQUEST_TIMEOUT_408 => RequestTimeout(msgPrefix + message)
         case t =>
           logger.error(s"not expected exception", t)
           InternalServerError(t.getMessage) // for an internal servlet we can and should expose the cause

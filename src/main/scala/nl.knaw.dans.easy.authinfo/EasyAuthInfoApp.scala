@@ -39,7 +39,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       case Success(Some(doc)) => Success(Some(Result(FileItem.toJson(doc), None)))
       case Success(None) => fromBagStore(bagId, path)
       case Failure(t) =>
-        logger.warn(t.getMessage, t) // TODO no stack / more info?
+        logger.warn(s"cache lookup failed for [$bagId/$path] with ${ t.getMessage }")
         fromBagStore(bagId, path)
     }
   }
@@ -63,25 +63,25 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       .map(getFileNode(_, path))
   }
 
-  private def collectInfo(bagId: UUID, path: Path, fn: Node) = {
+  private def collectInfo(bagId: UUID, path: Path, fileNode: Node) = {
     for {
       ddm <- bagStore.loadDDM(bagId)
-      ddmProfile <- getTag(ddm, "profile")
-      dateAvailable <- getTag(ddmProfile, "available").map(_.text)
-      rights <- FileRights.get(ddmProfile, fn)
+      ddmProfile <- getTag(ddm, "profile", bagId)
+      dateAvailable <- getTag(ddmProfile, "available", bagId).map(_.text)
+      rights <- FileRights.get(ddmProfile, fileNode)
       bagInfo <- bagStore.loadBagInfo(bagId)
-      owner <- getDepositor(bagInfo)
+      owner <- getDepositor(bagInfo, bagId)
     } yield FileItem(bagId, path, owner, rights, dateAvailable)
   }
 
-  private def getTag(node: Node, tag: String): Try[Node] = {
+  private def getTag(node: Node, tag: String, bagId: UUID): Try[Node] = {
     Try { (node \ tag).head }
-      .recoverWith { case t => Failure(new Exception(s"<ddm:$tag> not found in dataset.xml [${ t.getMessage }]")) }
+      .recoverWith { case t => Failure(InvalidBagException(s"<ddm:$tag> not found in $bagId/dataset.xml")) }
   }
 
-  private def getDepositor(bagInfoMap: BagInfo) = {
+  private def getDepositor(bagInfoMap: BagInfo, bagId: UUID) = {
     Try(bagInfoMap("EASY-User-Account"))
-      .recoverWith { case t => Failure(new Exception(s"'EASY-User-Account' (case sensitive) not found in bag-info.txt [${ t.getMessage }]")) }
+      .recoverWith { case _ => Failure(InvalidBagException(s"'EASY-User-Account' (case sensitive) not found in $bagId/bag-info.txt")) }
   }
 
   def getFileNode(xmlDoc: Elem, path: Path): Option[Node] = {

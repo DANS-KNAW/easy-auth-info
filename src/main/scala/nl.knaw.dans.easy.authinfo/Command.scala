@@ -64,8 +64,8 @@ object Command extends App with DebugEnhancedLogging {
       subPath = fullPath.relativize(root)
       rightsOf <- app.rightsOf(uuid, subPath)
     } yield rightsOf match {
-        // TODO how to report cache problems?
-      case Some(Result(rights,_)) => Success(pretty(render(rights)))
+      // TODO how to report cache problems?
+      case Some(Result(rights, _)) => Success(pretty(render(rights)))
       case None => Failure(new FileNotFoundException(fullPath.toString))
     }).flatten
   }

@@ -23,10 +23,8 @@ import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.util.NamedList
 import org.json4s.JsonAST.JValue
 
-import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-import scala.collection.mutable
-import scala.util.{ Failure, Success, Try }
+import scala.util.Try
 import scalaj.http.HttpResponse
 
 package object authinfo {
@@ -34,10 +32,16 @@ package object authinfo {
   type BagInfo = Map[String, String]
 
   /**
-   * @param authInfo authorisation information
+   * @param authInfo    authorisation information
    * @param cacheUpdate None: not updated because it was found
    */
   case class Result(authInfo: JValue, cacheUpdate: Option[Try[UpdateResponse]])
+
+  implicit class RichString(val s: String) extends AnyVal {
+
+    // TODO candidate for dans-scala-lib
+    def toOneLiner: String = s.split("\n").map(_.trim).mkString(" ")
+  }
 
   case class HttpStatusException(msg: String, response: HttpResponse[String])
     extends Exception(s"$msg - ${ response.statusLine }, details: ${ response.body }")
@@ -61,33 +65,10 @@ package object authinfo {
     extends Exception(s"solr query [$query] failed with ${ cause.getMessage }", cause)
 
   case class SolrUpdateException(literals: SolrLiterals, cause: Throwable)
-    extends Exception(s"solr update of $literals failed with ${ cause.getMessage }", cause)
+    extends Exception(s"solr update of [${ literals.toMap.mkString(", ") }] failed with ${ cause.getMessage }", cause)
 
   case class SolrCommitException(cause: Throwable)
     extends Exception(cause.getMessage, cause)
 
-  case class MixedResultsException[T](results: Seq[T], thrown: Throwable)
-  // TODO evolve into candidate for dans.lib.error with takeUntilFailure
-    extends Exception(thrown.getMessage, thrown)
-  implicit class RichTryStream[T](val left: Seq[Try[T]]) extends AnyVal {
-
-    /** Typical usage: toStream.map(TrySomething).takeUntilFailure */
-    def takeUntilFailure: Try[Seq[T]] = {
-      val it = left.iterator
-      val b = mutable.ListBuffer[T]()
-
-      @tailrec
-      def inner(): Try[Seq[T]] = {
-        if (!it.hasNext) Success(b)
-        else it.next() match {
-          case Success(y) =>
-            b += y
-            inner()
-          case Failure(t) => Failure(MixedResultsException(b, t))
-        }
-      }
-
-      inner()
-    }
-  }
+  case class InvalidBagException(message: String) extends Exception(message)
 }
