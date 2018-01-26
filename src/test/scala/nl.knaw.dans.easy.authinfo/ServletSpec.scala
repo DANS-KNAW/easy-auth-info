@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.authinfo
 import java.util
 
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
-import nl.knaw.dans.easy.authinfo.components.{ Solr, SolrImpl }
+import nl.knaw.dans.easy.authinfo.components.{ AuthCache, AuthCacheWithSolr }
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.solr.client.solrj.response.{ QueryResponse, UpdateResponse }
 import org.apache.solr.client.solrj.{ SolrClient, SolrRequest, SolrResponse }
@@ -52,7 +52,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
       addProperty("bag-store.url", "http://localhost:20110/")
       addProperty("solr.url", "http://hostThatDoesNotExist")
     })
-    override val solr: Solr = new SolrImpl() {
+    override val authCache: AuthCache = new AuthCacheWithSolr() {
       override val solrClient: SolrClient = new SolrClient() {
         // can't use mock because SolrClient has a final method
 

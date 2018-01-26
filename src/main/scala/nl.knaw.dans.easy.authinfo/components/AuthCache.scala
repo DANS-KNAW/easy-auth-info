@@ -1,18 +1,18 @@
 package nl.knaw.dans.easy.authinfo.components
 
-import nl.knaw.dans.easy.authinfo.components.Solr.SolrLiterals
+import nl.knaw.dans.easy.authinfo.components.AuthCache.CacheLiterals
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrDocument
 
 import scala.util.{ Failure, Success, Try }
 
-trait Solr {
+trait AuthCache {
 
 
   def search(itemId: String): Try[Option[SolrDocument]] =
     Success(None)
 
-  def submit(solrFields: SolrLiterals): Try[UpdateResponse] =
+  def submit(cacheFields: CacheLiterals): Try[UpdateResponse] =
     Failure(new NotImplementedError())
 
   def delete(query: String): Try[UpdateResponse] =
@@ -24,7 +24,7 @@ trait Solr {
   def close(): Try[Unit] =
     Success(())
 }
-object Solr {
-  type SolrLiterals = Seq[(String, String)]
+object AuthCache {
+  type CacheLiterals = Seq[(String, String)]
 
 }

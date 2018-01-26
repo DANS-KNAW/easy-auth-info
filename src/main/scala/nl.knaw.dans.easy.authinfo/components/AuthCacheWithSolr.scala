@@ -15,8 +15,8 @@
  */
 package nl.knaw.dans.easy.authinfo.components
 
-import nl.knaw.dans.easy.authinfo.components.Solr.SolrLiterals
-import nl.knaw.dans.easy.authinfo.{ SolrBadRequestException, SolrCommitException, SolrDeleteException, SolrSearchException, SolrStatusException, SolrUpdateException }
+import nl.knaw.dans.easy.authinfo.components.AuthCache.CacheLiterals
+import nl.knaw.dans.easy.authinfo.{ CacheBadRequestException, CacheCommitException, CacheDeleteException, CacheSearchException, CacheStatusException, CacheUpdateException }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.http.HttpStatus._
 import org.apache.solr.client.solrj.impl.HttpSolrClient
@@ -28,7 +28,7 @@ import scala.collection.JavaConverters._
 import scala.language.postfixOps
 import scala.util.{ Failure, Success, Try }
 
-trait SolrImpl extends Solr with DebugEnhancedLogging {
+trait AuthCacheWithSolr extends AuthCache with DebugEnhancedLogging {
   val solrClient: SolrClient
 
   override def search(itemId: String): Try[Option[SolrDocument]] = {
@@ -40,20 +40,20 @@ trait SolrImpl extends Solr with DebugEnhancedLogging {
       .map(_.getResults.asScala.headOption)
       .recoverWith {
         case t: HttpSolrClient.RemoteSolrException if isParseException(t) =>
-          Failure(SolrBadRequestException(t.getMessage, t))
+          Failure(CacheBadRequestException(t.getMessage, t))
         case t =>
-          Failure(SolrSearchException(query.toQueryString, t))
+          Failure(CacheSearchException(query.toQueryString, t))
       }
   }
 
-  override def submit(solrFields: SolrLiterals): Try[UpdateResponse] = {
+  override def submit(solrFields: CacheLiterals): Try[UpdateResponse] = {
     Try(solrClient.add(new SolrInputDocument() {
       for ((k, v) <- solrFields) {
         addField(k, v)
       }
     }))
       .flatMap(checkResponseStatus)
-      .recoverWith { case t => Failure(SolrUpdateException(solrFields, t)) }
+      .recoverWith { case t => Failure(CacheUpdateException(solrFields, t)) }
   }
 
   override def delete(query: String): Try[UpdateResponse] = {
@@ -64,16 +64,16 @@ trait SolrImpl extends Solr with DebugEnhancedLogging {
       .flatMap(checkResponseStatus)
       .recoverWith {
         case t: HttpSolrClient.RemoteSolrException if isParseException(t) =>
-          Failure(SolrBadRequestException(t.getMessage, t))
+          Failure(CacheBadRequestException(t.getMessage, t))
         case t =>
-          Failure(SolrDeleteException(query, t))
+          Failure(CacheDeleteException(query, t))
       }
   }
 
   override def commit(): Try[UpdateResponse] = {
     Try(solrClient.commit())
       .flatMap(checkResponseStatus)
-      .recoverWith { case t => Failure(SolrCommitException(t)) }
+      .recoverWith { case t => Failure(CacheCommitException(t)) }
   }
 
   override def close(): Try[Unit] = {
@@ -88,7 +88,7 @@ trait SolrImpl extends Solr with DebugEnhancedLogging {
     // this method hides the inconsistent design of the solr library from the rest of the code
     Try(response.getStatus) match {
       case Success(0) | Success(SC_OK) => Success(response)
-      case Success(_) => Failure(SolrStatusException(response.getResponse))
+      case Success(_) => Failure(CacheStatusException(response.getResponse))
       case Failure(_: NullPointerException) => Success(response) // no status at all
       case Failure(t) => Failure(t)
     }

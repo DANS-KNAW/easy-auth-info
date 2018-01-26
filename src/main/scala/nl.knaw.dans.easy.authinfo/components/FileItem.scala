@@ -18,8 +18,8 @@ package nl.knaw.dans.easy.authinfo.components
 import java.nio.file.Path
 import java.util.UUID
 
+import nl.knaw.dans.easy.authinfo.components.AuthCache.CacheLiterals
 import nl.knaw.dans.easy.authinfo.components.FileItem.solr2jsonKey
-import nl.knaw.dans.easy.authinfo.components.Solr.SolrLiterals
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.solr.common.SolrDocument
 import org.json4s.JsonAST
@@ -30,7 +30,7 @@ import scala.collection.JavaConverters._
 
 case class FileItem(id: UUID, path: Path, owner: String, rights: FileRights, dateAvailable: String) extends DebugEnhancedLogging {
 
-  val solrLiterals: SolrLiterals = Seq(
+  val solrLiterals: CacheLiterals = Seq(
     ("id", s"$id/$path"),
     ("easy_owner", owner),
     ("easy_date_available", dateAvailable),

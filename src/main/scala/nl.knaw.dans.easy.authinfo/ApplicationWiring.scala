@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.authinfo
 
 import java.net.URI
 
-import nl.knaw.dans.easy.authinfo.components.{ BagStoreComponent, Solr, SolrImpl }
+import nl.knaw.dans.easy.authinfo.components.{ AuthCache, AuthCacheWithSolr, BagStoreComponent }
 import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.client.solrj.impl.HttpSolrClient
 
@@ -35,11 +35,11 @@ trait ApplicationWiring extends BagStoreComponent {
     override val baseUri: URI = new URI(configuration.properties.getString("bag-store.url"))
   }
 
-  val solr: Solr = {
+  val authCache: AuthCache = {
     Option(configuration.properties.getString("solr.url")) match {
-      case None => new Solr() {}
+      case None => new AuthCache() {}
       case Some(s) =>
-        new SolrImpl() {
+        new AuthCacheWithSolr() {
           override val solrClient: SolrClient = new HttpSolrClient.Builder(s).build()
         }
     }

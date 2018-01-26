@@ -28,14 +28,14 @@ import scala.xml.{ Elem, Node }
 trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
 
   def delete(query: String): Try[FeedBackMessage] = {
-    solr
+    authCache
       .delete(query)
-      .flatMap(_ => solr.commit())
+      .flatMap(_ => authCache.commit())
       .map(_ => s"Deleted documents for query $query ")
   }
 
   def rightsOf(bagId: UUID, path: Path): Try[Option[Result]] = {
-    solr.search(s"$bagId/$path") match {
+    authCache.search(s"$bagId/$path") match {
       case Success(Some(doc)) => Success(Some(Result(FileItem.toJson(doc), None)))
       case Success(None) => fromBagStore(bagId, path)
       case Failure(t) =>
@@ -51,7 +51,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       case Success(Some(filesXmlItem)) => collectInfo(bagId, path, filesXmlItem) match {
         case Failure(t) => Failure(t)
         case Success(fileItem) =>
-          val cacheUpdate = Some(solr.submit(fileItem.solrLiterals))
+          val cacheUpdate = Some(authCache.submit(fileItem.solrLiterals))
           Success(Some(Result(fileItem.json, cacheUpdate)))
       }
     }
@@ -76,7 +76,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
 
   private def getTag(node: Node, tag: String, bagId: UUID): Try[Node] = {
     Try { (node \ tag).head }
-      .recoverWith { case t => Failure(InvalidBagException(s"<ddm:$tag> not found in $bagId/dataset.xml")) }
+      .recoverWith { case _ => Failure(InvalidBagException(s"<ddm:$tag> not found in $bagId/dataset.xml")) }
   }
 
   private def getDepositor(bagInfoMap: BagInfo, bagId: UUID) = {
@@ -93,7 +93,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
   }
 
   override def close(): Unit = {
-    solr.close()
+    authCache.close()
   }
 }
 

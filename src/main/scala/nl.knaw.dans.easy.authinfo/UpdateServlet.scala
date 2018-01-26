@@ -38,7 +38,7 @@ class UpdateServlet(app: EasyAuthInfoApp) extends ScalatraServlet with DebugEnha
     result.map(Ok(_))
       .doIfFailure { case e => logger.error(e.getMessage, e) }
       .getOrRecover {
-        case SolrBadRequestException(message, _) => BadRequest(message)
+        case CacheBadRequestException(message, _) => BadRequest(message)
         case HttpStatusException(message, r: HttpResponse[String]) if r.code == NOT_FOUND_404 => NotFound(message)
         case HttpStatusException(message, r: HttpResponse[String]) if r.code == SERVICE_UNAVAILABLE_503 => ServiceUnavailable(message)
         case HttpStatusException(message, r: HttpResponse[String]) if r.code == REQUEST_TIMEOUT_408 => RequestTimeout(message)

@@ -18,7 +18,7 @@ package nl.knaw.dans.easy
 import java.nio.file.Path
 
 import com.google.common.net.UrlEscapers
-import nl.knaw.dans.easy.authinfo.components.Solr.SolrLiterals
+import nl.knaw.dans.easy.authinfo.components.AuthCache.CacheLiterals
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.util.NamedList
 import org.json4s.JsonAST.JValue
@@ -52,22 +52,22 @@ package object authinfo {
     path.asScala.map(_.toString).map(pathEscaper.escape).mkString("/")
   }
 
-  case class SolrStatusException(namedList: NamedList[AnyRef])
+  case class CacheStatusException(namedList: NamedList[AnyRef])
     extends Exception(s"solr returned: ${ namedList.asShallowMap().values().toArray().mkString }")
 
-  case class SolrBadRequestException(msg: String, cause: Throwable)
+  case class CacheBadRequestException(msg: String, cause: Throwable)
     extends Exception(msg, cause)
 
-  case class SolrDeleteException(query: String, cause: Throwable)
+  case class CacheDeleteException(query: String, cause: Throwable)
     extends Exception(s"solr delete [$query] failed with ${ cause.getMessage }", cause)
 
-  case class SolrSearchException(query: String, cause: Throwable)
+  case class CacheSearchException(query: String, cause: Throwable)
     extends Exception(s"solr query [$query] failed with ${ cause.getMessage }", cause)
 
-  case class SolrUpdateException(literals: SolrLiterals, cause: Throwable)
+  case class CacheUpdateException(literals: CacheLiterals, cause: Throwable)
     extends Exception(s"solr update of [${ literals.toMap.mkString(", ") }] failed with ${ cause.getMessage }", cause)
 
-  case class SolrCommitException(cause: Throwable)
+  case class CacheCommitException(cause: Throwable)
     extends Exception(cause.getMessage, cause)
 
   case class InvalidBagException(message: String) extends Exception(message)
