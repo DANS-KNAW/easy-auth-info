@@ -56,7 +56,7 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
   private def respond(uuid: UUID, path: Path, rights: Try[Option[Result]]) = {
     rights match {
       case Success(Some(Result(json, Some(Failure(t))))) =>
-        logger.error(s"cache update failed for [$uuid/$path] reason: ${ t.getMessage }")
+        logger.error(s"cache update failed for [$uuid/$path] reason: ${ t.getMessage.toOneLiner }")
         Ok(pretty(render(json)))
       case Success(Some(Result(json, Some(Success(_))))) =>
         logger.info(s"cache updated for [$uuid/$path]")

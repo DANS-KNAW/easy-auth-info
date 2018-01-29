@@ -26,22 +26,82 @@
   become: yes
   vars:
     dans_config_base: "/etc/opt/dans.knaw.nl"
-    modules:
-      - easy-bag-store
-      - easy-auth-info
   tasks:
 
     - name: Installing packages
       yum:
         name: "dans.knaw.nl-{{ item }}"
         state: latest
-      with_items: "{{ modules }}"
+      with_items:
+      - easy-bag-store
+      - easy-auth-info
 
     - include_role:
         name: bag-store-dirs
 
+########### the solr core
+
+# TODO move into a role, an attempt caused ...ERROR: /etc/init.d/solr already exists!...
+
+- hosts: "test"
+  vars:
+    solr_install_dir: "/opt/org.apache"
+    solr_var_dir: "/var/opt/org.apache"
+    solr_home: "{{ solr_var_dir }}/solr-home"
+    solr_log_dir: "{{ solr_var_dir }}/log/solr"
+    solr_core: "authinfo"
+    solr_core_src: "../assembly/dist/install/{{ solr_core }}"
+    solr_core_dest: "{{ solr_home }}/data/{{ solr_core }}/conf"
+    solr_cores: # implicitly used by included dans.solr
+      - { name: "{{ solr_core }}", confdir: "sample_techproducts_configs" }
+  become: yes
+  tasks:
+
+    - name: Create FHS compatible directories for Solr
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - "{{ solr_install_dir }}"
+        - "{{ solr_log_dir }}"
+        - "{{ solr_home }}"
+
+    - name: Install Solr
+      include_role:
+        name: "dans.solr"
+      vars:
+        solr_install_path: "{{ solr_install_dir }}/solr"
+        solr_log_file_path: "{{ solr_log_dir }}/solr.log"
+        solr_version: "6.6.1"
+        solr_package: "http://maven-repo.dans.knaw.nl/ext-release-local/org/apache/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
+
+    - name: Copy solr core configuration
+      copy:
+        src: "{{ solr_core_src }}/{{ item }}"
+        dest: "{{ solr_core_dest }}/"
+      with_items:
+        - "schema.xml"
+        - "solrconfig.xml"
+
+    - name: Remove (disable) managed schemas
+      file:
+        path: "{{ solr_core_dest }}/managed-schema"
+        state: absent
+
+    - service:
+        name: "solr"
+        state: restarted
+        enabled: yes
+
+########### start services
+
+- hosts: "test"
+  become: yes
+  tasks:
     - service:
         name: "{{ item }}"
         state: started
         enabled: yes
-      with_items: "{{ modules }}"
+      with_items:
+      - easy-bag-store
+      - easy-auth-info
