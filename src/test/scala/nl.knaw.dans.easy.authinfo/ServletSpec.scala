@@ -15,16 +15,12 @@
  */
 package nl.knaw.dans.easy.authinfo
 
-import java.util
-
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
+import nl.knaw.dans.easy.authinfo.components.SolrMocker._
 import nl.knaw.dans.easy.authinfo.components.{ AuthCache, AuthCacheWithSolr }
 import org.apache.commons.configuration.PropertiesConfiguration
-import org.apache.solr.client.solrj.response.{ QueryResponse, UpdateResponse }
-import org.apache.solr.client.solrj.{ SolrClient, SolrRequest, SolrResponse }
-import org.apache.solr.common.params.SolrParams
-import org.apache.solr.common.util.NamedList
-import org.apache.solr.common.{ SolrDocument, SolrDocumentList, SolrInputDocument }
+import org.apache.solr.client.solrj.SolrClient
+import org.apache.solr.common.SolrDocument
 import org.eclipse.jetty.http.HttpStatus._
 import org.scalamock.scalatest.MockFactory
 import org.scalatra.test.scalatest.ScalatraSuite
@@ -37,60 +33,18 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   with ScalatraSuite
   with MockFactory {
 
-  trait UpdateResponseValues {
-    def status: Int
-
-    def response: NamedList[AnyRef]
-  }
-  private val mockUpdateResponseValues = mock[UpdateResponseValues]
-  private val mockDocList = mock[SolrDocumentList]
-
   private val app = new EasyAuthInfoApp {
     // mocking at a low level to test the chain of error handling
     override val bagStore: BagStore = mock[BagStore]
     override lazy val configuration: Configuration = new Configuration("", new PropertiesConfiguration() {
-      addProperty("bag-store.url", "http://localhost:20110/")
+      addProperty("bag-store.url", "http://hostThatDoesNotExist:20110/")
       addProperty("solr.url", "http://hostThatDoesNotExist")
     })
     override val authCache: AuthCache = new AuthCacheWithSolr() {
-      override val solrClient: SolrClient = new SolrClient() {
-        // can't use mock because SolrClient has a final method
-
-        override def query(params: SolrParams): QueryResponse = new QueryResponse() {
-          override def getResults: SolrDocumentList = mockDocList
-        }
-
-        override def add(doc: SolrInputDocument): UpdateResponse = new UpdateResponse {
-
-          override def getStatus: Int = mockUpdateResponseValues.status
-
-          override def getResponse: NamedList[AnyRef] = mockUpdateResponseValues.response
-        }
-
-        override def close(): Unit = ()
-
-        override def request(solrRequest: SolrRequest[_ <: SolrResponse], s: String): NamedList[AnyRef] =
-          throw new Exception("not expected")
-      }
+      override val solrClient: SolrClient = mockedSolrClient
     }
   }
-
-  private def expectsDocIsNotFoundInCache = {
-    mockDocList.isEmpty _ expects() once() returning true
-  }
-
-  private def expectsDocFoundInCahce(document: SolrDocument) = {
-    val cachedDoc = new util.Iterator[SolrDocument]() {
-
-      override def hasNext: Boolean = true
-
-      override def next(): SolrDocument = {
-        document
-      }
-    }
-    mockDocList.isEmpty _ expects() once() returning false
-    mockDocList.iterator _ expects() once() returning cachedDoc
-  }
+  addServlet(new EasyAuthInfoServlet(app), "/*")
 
   private val openAccessDDM: Elem =
     <ddm:DDM>
@@ -108,8 +62,6 @@ class ServletSpec extends TestSupportFixture with ServletFixture
       </file>
     </files>
 
-  addServlet(new EasyAuthInfoServlet(app), "/*")
-
   "get /" should "return the message that the service is running" in {
     get("/") {
       body shouldBe "EASY Auth Info Service running..."
@@ -118,7 +70,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   "get /:uuid/*" should "return values from the solr cache" in {
-    expectsDocFoundInCahce(new SolrDocument() {
+    expectsSolrDocInCahce(new SolrDocument() {
       addField("id", s"${ randomUUID }/some.file")
       addField("easy_owner", "someone")
       addField("easy_date_available", "1992-07-30")
@@ -136,8 +88,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     }
   }
   it should "report cache was updated" in {
-    expectsDocIsNotFoundInCache
-    mockUpdateResponseValues.status _ expects() once() returning 0
+    expectsSolrDocIsNotInCache
+    expectsSolrDocUpdateSuccess
     app.bagStore.loadBagInfo _ expects randomUUID once() returning Success(Map("EASY-User-Account" -> "someone"))
     app.bagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
@@ -153,9 +105,8 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report cache update failed" in {
-    expectsDocIsNotFoundInCache
-    mockUpdateResponseValues.status _ expects() once() returning -1
-    mockUpdateResponseValues.response _ expects() once() returning new NamedList[AnyRef]()
+    expectsSolrDocIsNotInCache
+    expextsSolrDocUpdateFailure
     app.bagStore.loadBagInfo _ expects randomUUID once() returning Success(Map("EASY-User-Account" -> "someone"))
     app.bagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
@@ -167,7 +118,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
          |  "accessibleTo":"KNOWN",
          |  "visibleTo":"KNOWN"
          |}""".stripMargin
-    ) // variations are tested with FileRightsSpec
+    )
   }
 
   it should "report invalid uuid" in {
@@ -179,46 +130,46 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report bag not found" in {
-    expectsDocIsNotFoundInCache
+    expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"Bag ${ randomUUID } does not exist in BagStore")
     shouldReturn(NOT_FOUND_404, s"${ randomUUID } does not exist")
   }
 
   it should "report file not found" in {
-    expectsDocIsNotFoundInCache
+    expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files/>)
     shouldReturn(NOT_FOUND_404, s"${ randomUUID }/some.file does not exist")
   }
 
   it should "report invalid bag: no files.xml" in {
-    expectsDocIsNotFoundInCache
+    expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"File ${ randomUUID }/metadata/files.xml does not exist in BagStore")
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: no DDM" in {
-    expectsDocIsNotFoundInCache
+    expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     app.bagStore.loadDDM _ expects randomUUID once() returning httpException(s"File ${ randomUUID }/metadata/dataset.xml does not exist in BagStore")
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: no profile in DDM" in {
-    expectsDocIsNotFoundInCache
+    expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     app.bagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM/>)
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: no date available in DDM" in {
-    expectsDocIsNotFoundInCache
+    expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     app.bagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM><ddm:profile/></ddm:DDM>)
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: no bag-info.txt" in {
-    expectsDocIsNotFoundInCache
+    expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     app.bagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
     app.bagStore.loadBagInfo _ expects randomUUID once() returning httpException(s"File ${ randomUUID }/info.txt does not exist in BagStore")
@@ -226,7 +177,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report invalid bag: depositor not found" in {
-    expectsDocIsNotFoundInCache
+    expectsSolrDocIsNotInCache
     app.bagStore.loadBagInfo _ expects randomUUID once() returning Success(Map.empty)
     app.bagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
