@@ -35,20 +35,17 @@ object SolrMocker extends MockFactory {
 
   val mockedSolrClient: SolrClient = new SolrClient() {
     // can't use mock because SolrClient has a final method
+    // override the abstract and expected methods, most not expected calls are supposed to fail
 
     override def query(params: SolrParams): QueryResponse = new QueryResponse() {
       override def getResults: SolrDocumentList = mockDocList
     }
 
-    override def add(doc: SolrInputDocument): UpdateResponse = new UpdateResponse {
+    override def add(doc: SolrInputDocument, commitWithinMs: Int): UpdateResponse = new UpdateResponse {
 
       override def getStatus: Int = mockUpdateResponseValues.status
 
       override def getResponse: NamedList[AnyRef] = mockUpdateResponseValues.response
-
-      override def getResponseHeader: NamedList[AnyRef] = throw new Exception("not expected")
-
-      override def getRequestUrl: String = throw new Exception("not expected")
     }
 
     override def close(): Unit = ()

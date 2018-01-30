@@ -39,8 +39,10 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     override lazy val configuration: Configuration = new Configuration("", new PropertiesConfiguration() {
       addProperty("bag-store.url", "http://hostThatDoesNotExist:20110/")
       addProperty("solr.url", "http://hostThatDoesNotExist")
+      addProperty("solr.collection", "authinfo")
     })
     override val authCache: AuthCache = new AuthCacheWithSolr() {
+      override val commitWithinMs = 1
       override val solrClient: SolrClient = mockedSolrClient
     }
   }

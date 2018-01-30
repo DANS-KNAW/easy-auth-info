@@ -25,15 +25,15 @@ import org.apache.solr.client.solrj.{ SolrClient, SolrQuery }
 import org.apache.solr.common.{ SolrDocument, SolrInputDocument }
 
 import scala.collection.JavaConverters._
-import scala.language.postfixOps
 import scala.util.{ Failure, Success, Try }
 
 trait AuthCacheWithSolr extends AuthCache with DebugEnhancedLogging {
   val solrClient: SolrClient
+  val commitWithinMs: Int
 
   override def search(itemId: String): Try[Option[SolrDocument]] = {
     val query = new SolrQuery {
-      set("q", s"id=$itemId")
+      set("q", s"id:$itemId")
     }
     Try(solrClient.query(query))
       .flatMap(checkResponseStatus)
@@ -47,11 +47,12 @@ trait AuthCacheWithSolr extends AuthCache with DebugEnhancedLogging {
   }
 
   override def submit(solrFields: CacheLiterals): Try[UpdateResponse] = {
-    Try(solrClient.add(new SolrInputDocument() {
+    val document = new SolrInputDocument() {
       for ((k, v) <- solrFields) {
         addField(k, v)
       }
-    }))
+    }
+    Try(solrClient.add(document, commitWithinMs))
       .flatMap(checkResponseStatus)
       .recoverWith { case t => Failure(CacheUpdateException(solrFields, t)) }
   }
@@ -70,13 +71,8 @@ trait AuthCacheWithSolr extends AuthCache with DebugEnhancedLogging {
       }
   }
 
-  override def commit(): Try[UpdateResponse] = {
-    Try(solrClient.commit())
-      .flatMap(checkResponseStatus)
-      .recoverWith { case t => Failure(CacheCommitException(t)) }
-  }
-
   override def close(): Try[Unit] = {
+    solrClient.commit()// loosing pending changes is not a problem, just try not to
     Try(solrClient.close())
   }
 

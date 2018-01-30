@@ -18,13 +18,16 @@ package nl.knaw.dans.easy.authinfo
 import java.net.URI
 
 import nl.knaw.dans.easy.authinfo.components.{ AuthCache, AuthCacheWithSolr, BagStoreComponent }
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.client.solrj.impl.HttpSolrClient
+
+import scala.util.Try
 
 /**
  * Initializes and wires together the components of this application.
  */
-trait ApplicationWiring extends BagStoreComponent {
+trait ApplicationWiring extends BagStoreComponent with DebugEnhancedLogging {
 
   /**
    * the application configuration
@@ -36,11 +39,19 @@ trait ApplicationWiring extends BagStoreComponent {
   }
 
   val authCache: AuthCache = {
-    Option(configuration.properties.getString("solr.url")) match {
-      case None => new AuthCache() {}
-      case Some(s) =>
+    (Option(configuration.properties.getString("solr.url")),
+      Option(configuration.properties.getString("solr.collection"))
+    ) match {
+      case (None, _) => new AuthCache() {}
+      case (_, None) => new AuthCache() {}
+      case (Some(url), Some(collection)) =>
+        val baseUrl = s"$url/$collection/"
+        logger.info(s"creating HttpSolrClient with $baseUrl")
         new AuthCacheWithSolr() {
-          override val solrClient: SolrClient = new HttpSolrClient.Builder(s).build()
+          override val solrClient: SolrClient = new HttpSolrClient.Builder(baseUrl).build()
+          override val commitWithinMs: Int = Try(
+            configuration.properties.getString("solr.commitWithinMs").toInt
+          ).getOrElse(15000)
         }
     }
   }
