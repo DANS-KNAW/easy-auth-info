@@ -39,8 +39,6 @@ Method   | Path       | Action
 ---------|------------|------------------------------------
 `GET`    | `/`        | Return a simple message to indicate that the service is up: "EASY Auth Info Service running..."
 `GET`    | `/:uuid/*` | Return the rights for the file from the bag with bag-id `:uuid` and bag local path `*`
-`DELETE` | `/:uuid`   | Remove documents from the cache for all files of the bag with id `:uuid`
-`DELETE` | `/:uuid/*` | Remove documents from the cache of file(s) or folder(s) with bag-id `:uuid` and bag local path starting with `*`
 
 
 EXAMPLES
