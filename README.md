@@ -44,9 +44,20 @@ Method   | Path       | Action
 EXAMPLES
 --------
 
-    easy-auth-info 40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml
-    curl http://localhost:20170/40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml
+```jshelllanguage
+easy-auth-info 40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml
+curl 'http://localhost:20170/40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml'
+```
 
+```json
+{
+  "itemId":"40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml",
+  "owner":"someone",
+  "dateAvailable":"1992-07-30",
+  "accessibleTo":"KNOWN",
+  "visibleTo":"KNOWN"
+}
+```
 
 INSTALLATION AND CONFIGURATION
 ------------------------------
@@ -77,6 +88,12 @@ Keep everything behind the firewall. Services like download and search will need
 servlet implementing the `GET` methods. Only emergency fixes will need access to the update servlet
 implementing the `DELETE` methods. Unintentional deletes won't hurt functionality but might have a
 performance penalty.
+
+### Performance advice
+
+Keeping the default `solr.url` and `solr.core` in the `application.properties` while not having the
+solr core up and running, will slow down the service even more than omitting the properties
+as it will try to read and update each request in the solr cache.
 
 
 BUILDING FROM SOURCE

@@ -47,10 +47,13 @@ trait ApplicationWiring extends BagStoreComponent with DebugEnhancedLogging {
         val baseUrl = s"$url/$collection/"
         logger.info(s"creating HttpSolrClient with $baseUrl")
         new AuthCacheWithSolr() {
+          // TODO the solr core might still not be available, slowing down the service even more than having no solr.url configured
           override val solrClient: SolrClient = new HttpSolrClient.Builder(baseUrl).build()
           override val commitWithinMs: Int = configuration.properties.getInt("solr.commitWithinMs", 15000)
         }
-      case _ => new AuthCacheNotConfigured() {}
+      case _ =>
+        logger.warn("RUNNING WITHOUT SOLR CACHE")
+        new AuthCacheNotConfigured() {}
     }
   }
 }
