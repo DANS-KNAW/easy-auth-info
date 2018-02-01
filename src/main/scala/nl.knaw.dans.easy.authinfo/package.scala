@@ -58,9 +58,6 @@ package object authinfo {
   case class CacheBadRequestException(msg: String, cause: Throwable)
     extends Exception(msg, cause)
 
-  case class CacheDeleteException(query: String, cause: Throwable)
-    extends Exception(s"solr delete [$query] failed with ${ cause.getMessage }", cause)
-
   case class CacheSearchException(query: String, cause: Throwable)
     extends Exception(s"solr query [$query] failed with ${ cause.getMessage }", cause)
 

@@ -29,8 +29,6 @@ trait AuthCacheNotConfigured {
 
   def submit(cacheFields: CacheLiterals): Try[UpdateResponse] = notImplemented
 
-  def delete(query: String): Try[UpdateResponse] = notImplemented
-
   def commit(): Try[UpdateResponse] = notImplemented
 
   def close(): Try[Unit] = Success(())

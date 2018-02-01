@@ -18,7 +18,6 @@ package nl.knaw.dans.easy.authinfo
 import java.nio.file.Path
 import java.util.UUID
 
-import nl.knaw.dans.easy.authinfo.Command.FeedBackMessage
 import nl.knaw.dans.easy.authinfo.components.{ FileItem, FileRights }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 
@@ -26,13 +25,6 @@ import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, Node }
 
 trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
-
-  def delete(query: String): Try[FeedBackMessage] = {
-    for {
-      _ <- authCache.delete(query)
-      _ <- authCache.commit()
-    } yield s"Deleted documents for query $query"
-  }
 
   def rightsOf(bagId: UUID, path: Path): Try[Option[CachedAuthInfo]] = {
     authCache.search(s"$bagId/$path") match {

@@ -16,7 +16,7 @@
 package nl.knaw.dans.easy.authinfo.components
 
 import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiterals
-import nl.knaw.dans.easy.authinfo.{ CacheBadRequestException, CacheDeleteException, CacheSearchException, CacheStatusException, CacheUpdateException }
+import nl.knaw.dans.easy.authinfo.{ CacheBadRequestException, CacheSearchException, CacheStatusException, CacheUpdateException }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.http.HttpStatus._
 import org.apache.solr.client.solrj.impl.HttpSolrClient
@@ -55,20 +55,6 @@ trait AuthCacheWithSolr extends AuthCacheNotConfigured with DebugEnhancedLogging
     Try(solrClient.add(document, commitWithinMs))
       .flatMap(checkResponseStatus)
       .recoverWith { case t => Failure(CacheUpdateException(solrFields, t)) }
-  }
-
-  override def delete(query: String): Try[UpdateResponse] = {
-    val q = new SolrQuery {
-      set("q", query)
-    }
-    Try(solrClient.deleteByQuery(q.getQuery))
-      .flatMap(checkResponseStatus)
-      .recoverWith {
-        case t: HttpSolrClient.RemoteSolrException if isParseException(t) =>
-          Failure(CacheBadRequestException(t.getMessage, t))
-        case t =>
-          Failure(CacheDeleteException(query, t))
-      }
   }
 
   override def close(): Try[Unit] = {
