@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.authinfo
 
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
 import nl.knaw.dans.easy.authinfo.components.SolrMocker._
-import nl.knaw.dans.easy.authinfo.components.{ AuthCache, AuthCacheWithSolr }
+import nl.knaw.dans.easy.authinfo.components.{ AuthCacheNotConfigured, AuthCacheWithSolr }
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.common.SolrDocument
@@ -41,7 +41,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
       addProperty("solr.url", "http://hostThatDoesNotExist")
       addProperty("solr.collection", "authinfo")
     })
-    override val authCache: AuthCache = new AuthCacheWithSolr() {
+    override val authCache: AuthCacheNotConfigured = new AuthCacheWithSolr() {
       override val commitWithinMs = 1
       override val solrClient: SolrClient = mockedSolrClient
     }
@@ -59,6 +59,10 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   private val FilesWithAllRightsForKnown: Elem =
     <files>
       <file filepath="some.file">
+        <accessibleToRights>{KNOWN}</accessibleToRights>
+        <visibleToRights>{KNOWN}</visibleToRights>
+      </file>
+      <file filepath="path/to/some.file">
         <accessibleToRights>{KNOWN}</accessibleToRights>
         <visibleToRights>{KNOWN}</visibleToRights>
       </file>
@@ -89,6 +93,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
       status shouldBe OK_200
     }
   }
+
   it should "report cache was updated" in {
     expectsSolrDocIsNotInCache
     expectsSolrDocUpdateSuccess
@@ -97,12 +102,13 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
     shouldReturn(OK_200,
       s"""{
-         |  "itemId":"${ randomUUID }/some.file",
+         |  "itemId":"${ randomUUID }/path/to/some.file",
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
          |  "visibleTo":"KNOWN"
-         |}""".stripMargin
+         |}""".stripMargin,
+      whenRequesting = s"${ randomUUID }/path/to/some.file"
     ) // variations are tested with FileRightsSpec
   }
 

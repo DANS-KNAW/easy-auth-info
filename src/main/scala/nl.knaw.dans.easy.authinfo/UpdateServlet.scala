@@ -26,11 +26,10 @@ import scala.util.Try
 import scalaj.http.HttpResponse
 
 class UpdateServlet(app: EasyAuthInfoApp) extends ScalatraServlet with DebugEnhancedLogging {
-  logger.info("File index Servlet running...")
 
-  get("/") {
+  get("/update") {
     contentType = "text/plain"
-    Ok("EASY File Index is running.")
+    Ok("EASY Auth Info update is running.")
   }
 
   private def respond(result: Try[String]): ActionResult = {
@@ -39,9 +38,9 @@ class UpdateServlet(app: EasyAuthInfoApp) extends ScalatraServlet with DebugEnha
       .doIfFailure { case e => logger.error(e.getMessage, e) }
       .getOrRecover {
         case CacheBadRequestException(message, _) => BadRequest(message)
-        case HttpStatusException(message, r: HttpResponse[String]) if r.code == NOT_FOUND_404 => NotFound(message)
-        case HttpStatusException(message, r: HttpResponse[String]) if r.code == SERVICE_UNAVAILABLE_503 => ServiceUnavailable(message)
-        case HttpStatusException(message, r: HttpResponse[String]) if r.code == REQUEST_TIMEOUT_408 => RequestTimeout(message)
+        case HttpStatusException(message, HttpResponse(_, NOT_FOUND_404, _)) => NotFound(message)
+        case HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _)) => ServiceUnavailable(message)
+        case HttpStatusException(message, HttpResponse(_, REQUEST_TIMEOUT_408, _)) => RequestTimeout(message)
         case t =>
           logger.error(s"not expected exception", t)
           InternalServerError(t.getMessage) // for an internal servlet we can and should expose the cause

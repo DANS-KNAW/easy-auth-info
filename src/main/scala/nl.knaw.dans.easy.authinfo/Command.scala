@@ -19,7 +19,6 @@ import java.io.FileNotFoundException
 import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
-import nl.knaw.dans.lib.error
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.native.JsonMethods.{ pretty, render }
@@ -38,8 +37,8 @@ object Command extends App with DebugEnhancedLogging {
   }
   val app = EasyAuthInfoApp(configuration)
 
-  error.TryExtensions(managed(app)
-    .acquireAndGet(runSubcommand))
+  managed(app)
+    .acquireAndGet(runSubcommand)
     .doIfSuccess(msg => println(s"OK: $msg"))
     .doIfFailure { case e => logger.error(e.getMessage, e) }
     .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
@@ -60,7 +59,7 @@ object Command extends App with DebugEnhancedLogging {
       subPath = fullPath.relativize(root)
       rightsOf <- app.rightsOf(uuid, subPath)
     } yield rightsOf match {
-      case Some(Result(rights, _)) => Success(pretty(render(rights)))
+      case Some(CachedAuthInfo(rights, _)) => Success(pretty(render(rights)))
       case None => Failure(new FileNotFoundException(fullPath.toString))
     }).flatten
   }

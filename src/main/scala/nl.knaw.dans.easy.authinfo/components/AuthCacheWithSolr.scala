@@ -15,8 +15,8 @@
  */
 package nl.knaw.dans.easy.authinfo.components
 
-import nl.knaw.dans.easy.authinfo.components.AuthCache.CacheLiterals
-import nl.knaw.dans.easy.authinfo.{ CacheBadRequestException, CacheCommitException, CacheDeleteException, CacheSearchException, CacheStatusException, CacheUpdateException }
+import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiterals
+import nl.knaw.dans.easy.authinfo.{ CacheBadRequestException, CacheDeleteException, CacheSearchException, CacheStatusException, CacheUpdateException }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.http.HttpStatus._
 import org.apache.solr.client.solrj.impl.HttpSolrClient
@@ -27,7 +27,7 @@ import org.apache.solr.common.{ SolrDocument, SolrInputDocument }
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
-trait AuthCacheWithSolr extends AuthCache with DebugEnhancedLogging {
+trait AuthCacheWithSolr extends AuthCacheNotConfigured with DebugEnhancedLogging {
   val solrClient: SolrClient
   val commitWithinMs: Int
 
@@ -72,7 +72,7 @@ trait AuthCacheWithSolr extends AuthCache with DebugEnhancedLogging {
   }
 
   override def close(): Try[Unit] = {
-    solrClient.commit()// loosing pending changes is not a problem, just try not to
+    solrClient.commit() // don't care about a failure, loosing a few pending changes is a minor performance loss
     Try(solrClient.close())
   }
 

@@ -18,7 +18,7 @@ package nl.knaw.dans.easy.authinfo.components
 import java.nio.file.Path
 import java.util.UUID
 
-import nl.knaw.dans.easy.authinfo.components.AuthCache.CacheLiterals
+import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiterals
 import nl.knaw.dans.easy.authinfo.components.FileItem.solr2jsonKey
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.solr.common.SolrDocument

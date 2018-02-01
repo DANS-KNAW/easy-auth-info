@@ -17,11 +17,11 @@ package nl.knaw.dans.easy.authinfo.components
 
 import java.util
 
-import org.apache.solr.client.solrj.{ SolrClient, SolrRequest, SolrResponse }
 import org.apache.solr.client.solrj.response.{ QueryResponse, UpdateResponse }
-import org.apache.solr.common.{ SolrDocument, SolrDocumentList, SolrInputDocument }
+import org.apache.solr.client.solrj.{ SolrClient, SolrRequest, SolrResponse }
 import org.apache.solr.common.params.SolrParams
 import org.apache.solr.common.util.NamedList
+import org.apache.solr.common.{ SolrDocument, SolrDocumentList, SolrInputDocument }
 import org.scalamock.scalatest.MockFactory
 
 object SolrMocker extends MockFactory {

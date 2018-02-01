@@ -15,31 +15,26 @@
  */
 package nl.knaw.dans.easy.authinfo.components
 
-import nl.knaw.dans.easy.authinfo.components.AuthCache.CacheLiterals
+import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiterals
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.SolrDocument
 
 import scala.util.{ Failure, Success, Try }
 
-trait AuthCache {
+trait AuthCacheNotConfigured {
 
+  private val notImplemented = Failure(new NotImplementedError("no cache configured, assembling responses from bag store only"))
 
-  def search(itemId: String): Try[Option[SolrDocument]] =
-    Success(None)
+  def search(itemId: String): Try[Option[SolrDocument]] = Success(None)
 
-  def submit(cacheFields: CacheLiterals): Try[UpdateResponse] =
-    Failure(new NotImplementedError())
+  def submit(cacheFields: CacheLiterals): Try[UpdateResponse] = notImplemented
 
-  def delete(query: String): Try[UpdateResponse] =
-    Failure(new NotImplementedError())
+  def delete(query: String): Try[UpdateResponse] = notImplemented
 
-  def commit(): Try[UpdateResponse] =
-    Failure(new NotImplementedError())
+  def commit(): Try[UpdateResponse] = notImplemented
 
-  def close(): Try[Unit] =
-    Success(())
+  def close(): Try[Unit] = Success(())
 }
-object AuthCache {
+object AuthCacheNotConfigured {
   type CacheLiterals = Seq[(String, String)]
-
 }

@@ -36,6 +36,7 @@ class EasyAuthInfoService(serverPort: Int, app: EasyAuthInfoApp) extends DebugEn
       ("anonymous", new LifeCycle {
         override def init(context: ServletContext): Unit = {
           context.mount(new EasyAuthInfoServlet(app), "/")
+          context.mount(new UpdateServlet(app), "/delete")
         }
       })
     }

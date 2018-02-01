@@ -50,18 +50,19 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet with Deb
   }
 
   private def getPath = Try {
+    // the find makes sure there is a path
     multiParams("splat").find(_.trim.nonEmpty).map(Paths.get(_))
   }
 
-  private def respond(uuid: UUID, path: Path, rights: Try[Option[Result]]) = {
+  private def respond(uuid: UUID, path: Path, rights: Try[Option[CachedAuthInfo]]) = {
     rights match {
-      case Success(Some(Result(json, Some(Failure(t))))) =>
+      case Success(Some(CachedAuthInfo(json, Some(Failure(t))))) =>
         logger.error(s"cache update failed for [$uuid/$path] reason: ${ t.getMessage.toOneLiner }")
         Ok(pretty(render(json)))
-      case Success(Some(Result(json, Some(Success(_))))) =>
+      case Success(Some(CachedAuthInfo(json, Some(Success(_))))) =>
         logger.info(s"cache updated for [$uuid/$path]")
         Ok(pretty(render(json)))
-      case Success(Some(Result(json, _))) =>
+      case Success(Some(CachedAuthInfo(json, _))) =>
         Ok(pretty(render(json)))
       case Success(None) => NotFound(s"$uuid/$path does not exist")
       case Failure(HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _))) => ServiceUnavailable(message)

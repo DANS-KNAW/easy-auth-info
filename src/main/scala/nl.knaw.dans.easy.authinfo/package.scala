@@ -18,7 +18,7 @@ package nl.knaw.dans.easy
 import java.nio.file.Path
 
 import com.google.common.net.UrlEscapers
-import nl.knaw.dans.easy.authinfo.components.AuthCache.CacheLiterals
+import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiterals
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.util.NamedList
 import org.json4s.JsonAST.JValue
@@ -35,7 +35,7 @@ package object authinfo {
    * @param authInfo    authorisation information
    * @param cacheUpdate None: not updated because it was found
    */
-  case class Result(authInfo: JValue, cacheUpdate: Option[Try[UpdateResponse]])
+  case class CachedAuthInfo(authInfo: JValue, cacheUpdate: Option[Try[UpdateResponse]] = None)
 
   implicit class RichString(val s: String) extends AnyVal {
 
@@ -43,14 +43,14 @@ package object authinfo {
     def toOneLiner: String = s.split("\n").map(_.trim).mkString(" ")
   }
 
-  case class HttpStatusException(msg: String, response: HttpResponse[String])
-    extends Exception(s"$msg - ${ response.statusLine }, details: ${ response.body }")
-
   private val pathEscaper = UrlEscapers.urlPathSegmentEscaper()
 
   def escapePath(path: Path): String = {
     path.asScala.map(_.toString).map(pathEscaper.escape).mkString("/")
   }
+
+  case class HttpStatusException(msg: String, response: HttpResponse[String])
+    extends Exception(s"$msg - ${ response.statusLine }, details: ${ response.body }")
 
   case class CacheStatusException(namedList: NamedList[AnyRef])
     extends Exception(s"solr returned: ${ namedList.asShallowMap().values().toArray().mkString }")

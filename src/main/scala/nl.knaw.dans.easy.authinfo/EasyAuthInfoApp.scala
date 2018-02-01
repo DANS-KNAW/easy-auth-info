@@ -28,15 +28,15 @@ import scala.xml.{ Elem, Node }
 trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
 
   def delete(query: String): Try[FeedBackMessage] = {
-    authCache
-      .delete(query)
-      .flatMap(_ => authCache.commit())
-      .map(_ => s"Deleted documents for query $query ")
+    for {
+      _ <- authCache.delete(query)
+      _ <- authCache.commit()
+    } yield s"Deleted documents for query $query"
   }
 
-  def rightsOf(bagId: UUID, path: Path): Try[Option[Result]] = {
+  def rightsOf(bagId: UUID, path: Path): Try[Option[CachedAuthInfo]] = {
     authCache.search(s"$bagId/$path") match {
-      case Success(Some(doc)) => Success(Some(Result(FileItem.toJson(doc), None)))
+      case Success(Some(doc)) => Success(Some(CachedAuthInfo(FileItem.toJson(doc))))
       case Success(None) => fromBagStore(bagId, path)
       case Failure(t) =>
         logger.warn(s"cache lookup failed for [$bagId/$path] ${ Option(t.getMessage).getOrElse("") }")
@@ -44,23 +44,18 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
     }
   }
 
-  private def fromBagStore(bagId: UUID, path: Path) = {
-    itemFromFilesXML(bagId, path) match {
-      case Failure(t) => Failure(t)
-      case Success(None) => Success(None) // TODO cache repeatedly requested but not found bags/files?
-      case Success(Some(filesXmlItem)) => collectInfo(bagId, path, filesXmlItem) match {
-        case Failure(t) => Failure(t)
-        case Success(fileItem) =>
-          val cacheUpdate = Some(authCache.submit(fileItem.solrLiterals))
-          Success(Some(Result(fileItem.json, cacheUpdate)))
-      }
-    }
-  }
-
-  private def itemFromFilesXML(bagId: UUID, path: Path) = {
+  private def fromBagStore(bagId: UUID, path: Path): Try[Option[CachedAuthInfo]] = {
     bagStore
       .loadFilesXML(bagId)
       .map(getFileNode(_, path))
+      .flatMap {
+        case None => Success(None) // TODO cache repeatedly requested but not found bags/files?
+        case Some(filesXmlItem) =>
+          collectInfo(bagId, path, filesXmlItem).map { fileItem =>
+            val cacheUpdate = authCache.submit(fileItem.solrLiterals)
+            Some(CachedAuthInfo(fileItem.json, Some(cacheUpdate)))
+          }
+      }
   }
 
   private def collectInfo(bagId: UUID, path: Path, fileNode: Node) = {

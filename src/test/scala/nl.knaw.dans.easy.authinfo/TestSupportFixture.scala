@@ -38,10 +38,15 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeA
   val uuidCentaur: UUID = UUID.fromString("9da0541a-d2c8-432e-8129-979a9830b427")
   val uuidAnonymized: UUID = UUID.fromString("1afcc4e9-2130-46cc-8faf-2663e199b218")
 
+  /**
+   * @param expectedJsonString a map with the expected key-value pairs
+   * @param actual             a map with the actual key-value pairs in any order
+   */
   def checkSameHashMaps(expectedJsonString: String, actual: json4s.JValue): Unit = {
     val expectedMap = parse(expectedJsonString).values.asInstanceOf[HashMap.HashTrieMap[String, String]]
     val actualMap = actual.values.asInstanceOf[HashMap.HashTrieMap[String, String]]
 
+    // because of the random order we have to check the elements one by one
     actualMap.keySet shouldBe expectedMap.keySet
     for (key <- expectedMap.keySet)
       actualMap(key.toString) shouldBe expectedMap(key)

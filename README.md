@@ -35,10 +35,12 @@ When started with the sub-command `run-service` a REST API becomes available wit
 In a path pattern `*` refers to any completion of the path, placeholders for variables start with a colon,
 and optional parts are enclosed in square brackets.
 
-Path       | Action
------------|------------------------------------
-`/`        | Return a simple message to indicate that the service is up: "EASY Auth Info Service running..."
-`/:uuid/*` | Return the rights for the file from the bag with bag-id `:uuid` and bag local path `*`
+Method   | Path       | Action
+---------|------------|------------------------------------
+`GET`    | `/`        | Return a simple message to indicate that the service is up: "EASY Auth Info Service running..."
+`GET`    | `/:uuid/*` | Return the rights for the file from the bag with bag-id `:uuid` and bag local path `*`
+`DELETE` | `/:uuid`   | Remove documents from the cache for all files of the bag with id `:uuid`
+`DELETE` | `/:uuid/*` | Remove documents from the cache of file(s) or folder(s) with bag-id `:uuid` and bag local path starting with `*`
 
 
 EXAMPLES
@@ -70,6 +72,13 @@ INSTALLATION AND CONFIGURATION
 
 General configuration settings can be set in `cfg/application.properties` and logging can be configured
 in `cfg/logback.xml`. The available settings are explained in comments in aforementioned files.
+
+### Security advice
+
+Keep everything behind the firewall. Services like download and search will need access to the main
+servlet implementing the `GET` methods. Only emergency fixes will need access to the update servlet
+implementing the `DELETE` methods. Unintentional deletes won't hurt functionality but might have a
+performance penalty.
 
 
 BUILDING FROM SOURCE
