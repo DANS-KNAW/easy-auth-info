@@ -41,7 +41,7 @@ class EasyAuthInfoService(serverPort: Int, app: EasyAuthInfoApp) extends DebugEn
     }
   })
   server.setHandler(context)
-  info(s"HTTP port is ${ serverPort }")
+  info(s"HTTP port is $serverPort")
 
   def start(): Try[Unit] = Try {
     info("Starting service...")

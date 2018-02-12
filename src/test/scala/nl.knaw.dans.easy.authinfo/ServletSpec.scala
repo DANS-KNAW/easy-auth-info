@@ -77,15 +77,15 @@ class ServletSpec extends TestSupportFixture with ServletFixture
 
   "get /:uuid/*" should "return values from the solr cache" in {
     expectsSolrDocInCahce(new SolrDocument() {
-      addField("id", s"${ randomUUID }/some.file")
+      addField("id", s"$randomUUID/some.file")
       addField("easy_owner", "someone")
       addField("easy_date_available", "1992-07-30")
       addField("easy_accessible_to", "KNOWN")
       addField("easy_visible_to", "ANONYMOUS")
     })
-    get(s"${ randomUUID }/some.file") {
+    get(s"$randomUUID/some.file") {
       // in this case the fields are returned in a random order
-      body should include(s""""itemId":"${ randomUUID }/some.file"""")
+      body should include(s""""itemId":"$randomUUID/some.file"""")
       body should include(s""""owner":"someone"""")
       body should include(s""""dateAvailable":"1992-07-30"""")
       body should include(s""""accessibleTo":"KNOWN"""")
@@ -102,13 +102,13 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
     shouldReturn(OK_200,
       s"""{
-         |  "itemId":"${ randomUUID }/path/to/some.file",
+         |  "itemId":"$randomUUID/path/to/some.file",
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
          |  "visibleTo":"KNOWN"
          |}""".stripMargin,
-      whenRequesting = s"${ randomUUID }/path/to/some.file"
+      whenRequesting = s"$randomUUID/path/to/some.file"
     ) // variations are tested with FileRightsSpec
   }
 
@@ -120,7 +120,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
     shouldReturn(OK_200,
       s"""{
-         |  "itemId":"${ randomUUID }/some.file",
+         |  "itemId":"$randomUUID/some.file",
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
@@ -134,31 +134,31 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   }
 
   it should "report missing path" in {
-    shouldReturn(BAD_REQUEST_400, "file path is empty", whenRequesting = s"${ randomUUID }/")
+    shouldReturn(BAD_REQUEST_400, "file path is empty", whenRequesting = s"$randomUUID/")
   }
 
   it should "report bag not found" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"Bag ${ randomUUID } does not exist in BagStore")
-    shouldReturn(NOT_FOUND_404, s"${ randomUUID } does not exist")
+    app.bagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"Bag $randomUUID does not exist in BagStore")
+    shouldReturn(NOT_FOUND_404, s"$randomUUID does not exist")
   }
 
   it should "report file not found" in {
     expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files/>)
-    shouldReturn(NOT_FOUND_404, s"${ randomUUID }/some.file does not exist")
+    shouldReturn(NOT_FOUND_404, s"$randomUUID/some.file does not exist")
   }
 
   it should "report invalid bag: no files.xml" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"File ${ randomUUID }/metadata/files.xml does not exist in BagStore")
+    app.bagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/files.xml does not exist in BagStore")
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: no DDM" in {
     expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    app.bagStore.loadDDM _ expects randomUUID once() returning httpException(s"File ${ randomUUID }/metadata/dataset.xml does not exist in BagStore")
+    app.bagStore.loadDDM _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/dataset.xml does not exist in BagStore")
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
@@ -180,7 +180,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     expectsSolrDocIsNotInCache
     app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     app.bagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
-    app.bagStore.loadBagInfo _ expects randomUUID once() returning httpException(s"File ${ randomUUID }/info.txt does not exist in BagStore")
+    app.bagStore.loadBagInfo _ expects randomUUID once() returning httpException(s"File $randomUUID/info.txt does not exist in BagStore")
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
@@ -192,7 +192,7 @@ class ServletSpec extends TestSupportFixture with ServletFixture
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
-  private def shouldReturn(expectedStatus: Int, expectedBody: String, whenRequesting: String = s"${ randomUUID }/some.file"): Any = {
+  private def shouldReturn(expectedStatus: Int, expectedBody: String, whenRequesting: String = s"$randomUUID/some.file"): Any = {
     // verify logging manually: set log-level on warn in test/resources/logback.xml //TODO? file appender for testDir/XxxSpec/app.log
     get(whenRequesting) {
       body shouldBe expectedBody
