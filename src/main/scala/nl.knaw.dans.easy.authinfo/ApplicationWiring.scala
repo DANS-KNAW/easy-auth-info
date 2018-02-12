@@ -45,7 +45,7 @@ trait ApplicationWiring extends BagStoreComponent with DebugEnhancedLogging {
     ) match {
       case (Success(Some(url)), Success(Some(collection))) =>
         val baseUrl = s"$url/$collection/"
-        logger.info(s"creating HttpSolrClient with $baseUrl")
+        logger.info(s"Running with solr cache: $baseUrl")
         new AuthCacheWithSolr() {
           // TODO the solr core might still not be available, slowing down the service even more than having no solr.url configured
           override val solrClient: SolrClient = new HttpSolrClient.Builder(baseUrl).build()
