@@ -23,6 +23,13 @@ ARGUMENTS
         --help      Show help message
         --version   Show version of this program
 
+    Subcommand: file - get accessibility of a file
+        --help   Show help message
+    
+     trailing arguments:
+      path (required)
+    ---
+
     Subcommand: run-service - Starts EASY Auth Info as a daemon that services HTTP requests
         --help   Show help message
     ---
@@ -45,7 +52,7 @@ EXAMPLES
 --------
 
 ```jshelllanguage
-easy-auth-info 40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml
+easy-auth-info file 40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml
 curl 'http://localhost:20170/40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml'
 ```
 

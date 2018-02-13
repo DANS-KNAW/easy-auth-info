@@ -18,14 +18,19 @@ package nl.knaw.dans.easy.authinfo
 import java.nio.file.{ Files, Path, Paths }
 import java.util.UUID
 
+import nl.knaw.dans.easy.authinfo.components.SolrMocker.mockedSolrClient
+import nl.knaw.dans.easy.authinfo.components.{ AuthCacheNotConfigured, AuthCacheWithSolr }
+import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.io.FileUtils
+import org.apache.solr.client.solrj.SolrClient
 import org.json4s
 import org.json4s.native.JsonMethods.parse
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ BeforeAndAfterEach, FlatSpec, Inside, Matchers }
 
 import scala.collection.immutable.HashMap
 
-trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeAndAfterEach {
+trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeAndAfterEach with MockFactory {
 
   lazy val testDir: Path = {
     val path = Paths.get(s"target/test/${ getClass.getSimpleName }").toAbsolutePath
@@ -51,4 +56,21 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeA
     for (key <- expectedMap.keySet)
       actualMap(key.toString) shouldBe expectedMap(key)
   }
+
+  def mockApp: EasyAuthInfoApp = {
+    new EasyAuthInfoApp {
+      // mocking at a low level to test the chain of error handling
+      override val bagStore: BagStore = mock[BagStore]
+      override lazy val configuration: Configuration = new Configuration("", new PropertiesConfiguration() {
+        addProperty("bag-store.url", "http://hostThatDoesNotExist:20110/")
+        addProperty("solr.url", "http://hostThatDoesNotExist")
+        addProperty("solr.collection", "authinfo")
+      })
+      override val authCache: AuthCacheNotConfigured = new AuthCacheWithSolr() {
+        override val commitWithinMs = 1
+        override val solrClient: SolrClient = mockedSolrClient
+      }
+    }
+  }
+
 }

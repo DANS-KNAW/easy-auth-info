@@ -47,7 +47,9 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
     singleArgConverter(UUID.fromString)
   }
 
-  val file = new Subcommand("file") {
+  val file: Subcommand {
+    val path: ScallopOption[Path]
+  } = new Subcommand("file") {
     descr("get accessibility of a file")
     val path: ScallopOption[Path] = trailArg[Path](name = "path", required = true)
     footer(SUBCOMMAND_SEPARATOR)
@@ -58,7 +60,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
       "Starts EASY Auth Info as a daemon that services HTTP requests")
     footer(SUBCOMMAND_SEPARATOR)
   }
-  // addSubcommand(file) // TODO not a sub-command
+  addSubcommand(file)
   addSubcommand(runService)
 
   footer("")

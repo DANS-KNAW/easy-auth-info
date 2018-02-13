@@ -38,30 +38,17 @@ object Command extends App with DebugEnhancedLogging {
   val app = EasyAuthInfoApp(configuration)
 
   managed(app)
-    .acquireAndGet(runSubcommand)
-    .doIfSuccess(msg => println(s"OK: $msg"))
+    .acquireAndGet(runSubCommand)
+    .doIfSuccess(msg => println(msg))
     .doIfFailure { case e => logger.error(e.getMessage, e) }
-    .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getMessage }") }
+    .doIfFailure { case NonFatal(e) => println(s"FAILED: ${e.getClass.getName} ${ e.getMessage }") }
 
-  private def runSubcommand(app: EasyAuthInfoApp): Try[FeedBackMessage] = {
-    commandLine.subcommand
-      .collect {
-        case commandLine.runService => runAsService(app)
-        case file @ commandLine.file => executeFileCommand(app, file.path())
-      }
-      .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
-  }
-
-  private def executeFileCommand(app: EasyAuthInfoApp, fullPath: Path) = {
-    (for {
-      root <- Try(Option(fullPath.getRoot).get).recoverWith { case _ => Failure(new Exception(s"no root element found in [$fullPath]")) }
-      uuid <- Try(UUID.fromString(root.toString)).recoverWith { case t => Failure(new Exception(s"root is not a valid uuid [$fullPath]", t)) }
-      subPath = fullPath.relativize(root)
-      rightsOf <- app.rightsOf(uuid, subPath)
-    } yield rightsOf match {
-      case Some(CachedAuthInfo(rights, _)) => Success(pretty(render(rights)))
-      case None => Failure(new FileNotFoundException(fullPath.toString))
-    }).flatten
+  private def runSubCommand(app: EasyAuthInfoApp): Try[FeedBackMessage] = {
+    commandLine.subcommand match {
+      case Some(commandLine.runService) => runAsService(app)
+      case Some(fileCommand @ commandLine.file) => app.rightsOf(fileCommand.path())
+      case _ => Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }"))
+    }
   }
 
   private def runAsService(app: EasyAuthInfoApp): Try[FeedBackMessage] = Try {

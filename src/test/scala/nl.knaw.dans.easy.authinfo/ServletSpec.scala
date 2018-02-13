@@ -17,35 +17,18 @@ package nl.knaw.dans.easy.authinfo
 
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
 import nl.knaw.dans.easy.authinfo.components.SolrMocker._
-import nl.knaw.dans.easy.authinfo.components.{ AuthCacheNotConfigured, AuthCacheWithSolr }
-import org.apache.commons.configuration.PropertiesConfiguration
-import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.common.SolrDocument
 import org.eclipse.jetty.http.HttpStatus._
-import org.scalamock.scalatest.MockFactory
 import org.scalatra.test.scalatest.ScalatraSuite
 
 import scala.util.{ Failure, Success }
 import scala.xml.Elem
 import scalaj.http.HttpResponse
 
-class ServletSpec extends TestSupportFixture with ServletFixture
-  with ScalatraSuite
-  with MockFactory {
+class ServletSpec extends TestSupportFixture with ServletFixture with ScalatraSuite {
 
-  private val app = new EasyAuthInfoApp {
-    // mocking at a low level to test the chain of error handling
-    override val bagStore: BagStore = mock[BagStore]
-    override lazy val configuration: Configuration = new Configuration("", new PropertiesConfiguration() {
-      addProperty("bag-store.url", "http://hostThatDoesNotExist:20110/")
-      addProperty("solr.url", "http://hostThatDoesNotExist")
-      addProperty("solr.collection", "authinfo")
-    })
-    override val authCache: AuthCacheNotConfigured = new AuthCacheWithSolr() {
-      override val commitWithinMs = 1
-      override val solrClient: SolrClient = mockedSolrClient
-    }
-  }
+  private val app = mockApp
+  private val mockedBagStore: app.BagStore = app.bagStore
   addServlet(new EasyAuthInfoServlet(app), "/*")
 
   private val openAccessDDM: Elem =
@@ -97,9 +80,9 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   it should "report cache was updated" in {
     expectsSolrDocIsNotInCache
     expectsSolrDocUpdateSuccess
-    app.bagStore.loadBagInfo _ expects randomUUID once() returning Success(Map("EASY-User-Account" -> "someone"))
-    app.bagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
+    mockedBagStore.loadBagInfo _ expects randomUUID once() returning Success(Map("EASY-User-Account" -> "someone"))
+    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
     shouldReturn(OK_200,
       s"""{
          |  "itemId":"$randomUUID/path/to/some.file",
@@ -115,9 +98,9 @@ class ServletSpec extends TestSupportFixture with ServletFixture
   it should "report cache update failed" in {
     expectsSolrDocIsNotInCache
     expextsSolrDocUpdateFailure
-    app.bagStore.loadBagInfo _ expects randomUUID once() returning Success(Map("EASY-User-Account" -> "someone"))
-    app.bagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
+    mockedBagStore.loadBagInfo _ expects randomUUID once() returning Success(Map("EASY-User-Account" -> "someone"))
+    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
     shouldReturn(OK_200,
       s"""{
          |  "itemId":"$randomUUID/some.file",
@@ -139,56 +122,56 @@ class ServletSpec extends TestSupportFixture with ServletFixture
 
   it should "report bag not found" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"Bag $randomUUID does not exist in BagStore")
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"Bag $randomUUID does not exist in BagStore")
     shouldReturn(NOT_FOUND_404, s"$randomUUID does not exist")
   }
 
   it should "report file not found" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files/>)
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files/>)
     shouldReturn(NOT_FOUND_404, s"$randomUUID/some.file does not exist")
   }
 
   it should "report invalid bag: no files.xml" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/files.xml does not exist in BagStore")
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/files.xml does not exist in BagStore")
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: no DDM" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    app.bagStore.loadDDM _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/dataset.xml does not exist in BagStore")
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+    mockedBagStore.loadDDM _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/dataset.xml does not exist in BagStore")
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: no profile in DDM" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    app.bagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM/>)
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM/>)
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: no date available in DDM" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    app.bagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM><ddm:profile/></ddm:DDM>)
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM><ddm:profile/></ddm:DDM>)
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: no bag-info.txt" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    app.bagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
-    app.bagStore.loadBagInfo _ expects randomUUID once() returning httpException(s"File $randomUUID/info.txt does not exist in BagStore")
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
+    mockedBagStore.loadBagInfo _ expects randomUUID once() returning httpException(s"File $randomUUID/info.txt does not exist in BagStore")
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
   it should "report invalid bag: depositor not found" in {
     expectsSolrDocIsNotInCache
-    app.bagStore.loadBagInfo _ expects randomUUID once() returning Success(Map.empty)
-    app.bagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
-    app.bagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+    mockedBagStore.loadBagInfo _ expects randomUUID once() returning Success(Map.empty)
+    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
+    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
   }
 
