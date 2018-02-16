@@ -15,18 +15,15 @@
  */
 package nl.knaw.dans.easy.authinfo
 
-import java.io.FileNotFoundException
-import java.nio.file.{ Path, Paths }
-import java.util.UUID
+import java.nio.file.Paths
 
 import nl.knaw.dans.lib.error._
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
-import org.json4s.native.JsonMethods.{ pretty, render }
 import resource._
 
 import scala.language.reflectiveCalls
 import scala.util.control.NonFatal
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Failure, Try }
 
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
@@ -38,16 +35,17 @@ object Command extends App with DebugEnhancedLogging {
   val app = EasyAuthInfoApp(configuration)
 
   managed(app)
-    .acquireAndGet(runSubCommand)
+    .acquireAndGet(runCommand)
     .doIfSuccess(println)
     .doIfFailure { case e => logger.error(e.getMessage, e) }
-    .doIfFailure { case NonFatal(e) => println(s"FAILED: ${e.getClass.getName} ${ e.getMessage }") }
+    .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getClass.getName } ${ e.getMessage }") }
 
-  private def runSubCommand(app: EasyAuthInfoApp): Try[FeedBackMessage] = {
-    commandLine.subcommand match {
-      case Some(commandLine.runService) => runAsService(app)
-      case Some(fileCommand @ commandLine.file) => app.jsonRightsOf(fileCommand.path())
-      case _ => Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }"))
+  private def runCommand(app: EasyAuthInfoApp): Try[FeedBackMessage] = {
+    (commandLine.path.isDefined, commandLine.subcommand) match {
+      case (false, Some(commandLine.runService)) => runAsService(app)
+      case (true, None) => app.jsonRightsOf(commandLine.path())
+      case (false, None) => Failure(new IllegalArgumentException(s"No command nor argument specified"))
+      case _ => Failure(new IllegalArgumentException(s"Invalid command, options or arguments: " + commandLine.args.mkString(" ")))
     }
   }
 

@@ -29,7 +29,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Provides consolidated authorization info about items in a bag store."""
   val synopsis: String =
     s"""
-       |  $printedName run-service""".stripMargin
+       |  $printedName [ run-service | <item-id> ]""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
   banner(
@@ -47,12 +47,7 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
     singleArgConverter(UUID.fromString)
   }
 
-  //noinspection TypeAnnotation
-  val file = new Subcommand("file") {
-    descr("get accessibility of a file")
-    val path: ScallopOption[Path] = trailArg[Path](name = "path", required = true)
-    footer(SUBCOMMAND_SEPARATOR)
-  }
+  val path: ScallopOption[Path] = trailArg[Path](name = "path", required = false)
 
   //noinspection TypeAnnotation
   val runService = new Subcommand("run-service") {
@@ -60,7 +55,6 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
       "Starts EASY Auth Info as a daemon that services HTTP requests")
     footer(SUBCOMMAND_SEPARATOR)
   }
-  addSubcommand(file)
   addSubcommand(runService)
 
   footer("")
