@@ -39,14 +39,14 @@ object Command extends App with DebugEnhancedLogging {
 
   managed(app)
     .acquireAndGet(runSubCommand)
-    .doIfSuccess(msg => println(msg))
+    .doIfSuccess(println)
     .doIfFailure { case e => logger.error(e.getMessage, e) }
     .doIfFailure { case NonFatal(e) => println(s"FAILED: ${e.getClass.getName} ${ e.getMessage }") }
 
   private def runSubCommand(app: EasyAuthInfoApp): Try[FeedBackMessage] = {
     commandLine.subcommand match {
       case Some(commandLine.runService) => runAsService(app)
-      case Some(fileCommand @ commandLine.file) => app.rightsOf(fileCommand.path())
+      case Some(fileCommand @ commandLine.file) => app.jsonRightsOf(fileCommand.path())
       case _ => Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }"))
     }
   }

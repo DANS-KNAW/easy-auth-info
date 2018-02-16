@@ -28,32 +28,37 @@ import scala.xml.{ Elem, Node }
 
 trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
 
-  def rightsOf(bagId: UUID, path: Path): Try[Option[CachedAuthInfo]] = {
-    authCache.search(s"$bagId/$path") match {
+  def rightsOf(bagId: UUID, bagRelativePath: Path): Try[Option[CachedAuthInfo]] = {
+    authCache.search(s"$bagId/$bagRelativePath") match {
       case Success(Some(doc)) => Success(Some(CachedAuthInfo(FileItem.toJson(doc))))
-      case Success(None) => fromBagStore(bagId, path)
+      case Success(None) => fromBagStore(bagId, bagRelativePath)
       case Failure(t) =>
-        logger.warn(s"cache lookup failed for [$bagId/$path] ${ Option(t.getMessage).getOrElse("") }")
-        fromBagStore(bagId, path)
+        logger.warn(s"cache lookup failed for [$bagId/$bagRelativePath] ${ Option(t.getMessage).getOrElse("") }")
+        fromBagStore(bagId, bagRelativePath)
     }
   }
 
-  def rightsOf(fullPath: Path): Try[String] = {
-    (for {
-      uuid <- extractUUID(fullPath)
-      subPath <- extractBagRelativePath(fullPath)
-      rightsOf <- rightsOf(uuid, subPath)
-    } yield rightsOf match {
-      case Some(CachedAuthInfo(rights, _)) => Success(pretty(render(rights)))
-      case None => Failure(new FileNotFoundException(fullPath.toString))
-    }).flatten
+  /** @param fullPath <UUID>/<bag-relative-path> */
+  def jsonRightsOf(fullPath: Path): Try[String] = rightsOf(fullPath) match {
+    case Success(Some(CachedAuthInfo(rights, _))) => Success(pretty(render(rights)))
+    case Success(None) => Failure(new FileNotFoundException(fullPath.toString))
+    case Failure(e) => Failure(e)
   }
 
+  /** @param fullPath <UUID>/<bag-relative-path> */
+  private def rightsOf(fullPath: Path): Try[Option[CachedAuthInfo]] = for {
+    uuid <- extractUUID(fullPath)
+    subPath <- extractBagRelativePath(fullPath)
+    cachedAuthInfo <- rightsOf(uuid, subPath)
+  } yield cachedAuthInfo
+
+  /** @param fullPath <UUID>/<bag-relative-path> */
   private def extractBagRelativePath(fullPath: Path) = {
     Try(fullPath.subpath(1, fullPath.getNameCount))
       .recoverWith { case t => Failure(new Exception(s"can't extract bag relative path from [$fullPath]", t)) }
   }
 
+  /** @param fullPath <UUID>/<bag-relative-path> */
   private def extractUUID(fullPath: Path) = {
     Try(UUID.fromString(fullPath.getName(0).toString))
       .recoverWith { case t => Failure(new Exception(s"can't extract valid UUID from [$fullPath]", t)) }

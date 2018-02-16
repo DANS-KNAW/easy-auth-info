@@ -27,19 +27,19 @@ class AppSpec extends TestSupportFixture {
   private val app = mockApp
 
   "rightsOf(path)" should "fail with /" in {
-    inside(app.rightsOf(Paths.get("/"))) {
+    inside(app.jsonRightsOf(Paths.get("/"))) {
       case Failure(e) => e should have message "can't extract valid UUID from [/]"
     }
   }
 
   it should "fail with just a uuid" in {
-    inside(app.rightsOf(Paths.get(s"$randomUUID"))) {
+    inside(app.jsonRightsOf(Paths.get(s"$randomUUID"))) {
       case Failure(e) => e should have message s"can't extract bag relative path from [$randomUUID]"
     }
   }
 
   it should "fail with and empty path" in {
-    inside(app.rightsOf(Paths.get(s"$randomUUID/"))) {
+    inside(app.jsonRightsOf(Paths.get(s"$randomUUID/"))) {
       case Failure(e) => e should have message s"can't extract bag relative path from [$randomUUID]"
     }
   }
@@ -50,7 +50,7 @@ class AppSpec extends TestSupportFixture {
       // ignoring the other fields to avoid testing random order results
       // the full content is tested with ServletSpec (which is designed to manually test all the logging)
     })
-    app.rightsOf(Paths.get(s"$randomUUID/some.txt")) shouldBe Success(
+    app.jsonRightsOf(Paths.get(s"$randomUUID/some.txt")) shouldBe Success(
       s"""{
          |  "itemId":"$randomUUID/some.file"
          |}""".stripMargin
