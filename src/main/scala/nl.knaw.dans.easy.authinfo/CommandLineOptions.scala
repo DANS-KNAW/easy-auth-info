@@ -43,10 +43,6 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |Options:
        |""".stripMargin)
 
-  private implicit def bagId: ValueConverter[UUID] = {
-    singleArgConverter(UUID.fromString)
-  }
-
   val path: ScallopOption[Path] = trailArg[Path](name = "path", required = false)
 
   //noinspection TypeAnnotation
