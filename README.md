@@ -6,7 +6,9 @@ easy-auth-info
 SYNOPSIS
 --------
 
-    easy-auth-info [ run-service | <item-id> ]
+    easy-auth-info run-service # Runs the program as a service
+    easy-auth-info <item-id> # Retrieves the information from the cache or directly from the bag-store
+
 
 DESCRIPTION
 -----------

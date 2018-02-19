@@ -16,9 +16,8 @@
 package nl.knaw.dans.easy.authinfo
 
 import java.nio.file.Path
-import java.util.UUID
 
-import org.rogach.scallop.{ ScallopConf, ScallopOption, Subcommand, ValueConverter, singleArgConverter }
+import org.rogach.scallop.{ ScallopConf, ScallopOption, Subcommand }
 
 class CommandLineOptions(args: Array[String], configuration: Configuration) extends ScallopConf(args) {
   appendDefaultToDescription = true
@@ -29,7 +28,8 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Provides consolidated authorization info about items in a bag store."""
   val synopsis: String =
     s"""
-       |  $printedName [ run-service | <item-id> ]""".stripMargin
+       |  $printedName run-service # Runs the program as a service
+       |  $printedName <item-id> # Retrieves the information from the cache or directly from the bag-store""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
   banner(
