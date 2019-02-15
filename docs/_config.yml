@@ -1,8 +1,8 @@
-title: easy-bag-store
+title: easy-auth-info
 description: >-
   A simple way to archive data packages.
-baseurl: "/easy-bag-store"
-github_username:  DANS-KNAW
+baseurl: "/easy-auth-info"
+github_username:  rkruithof
 
 # Build settings
 markdown: kramdown
