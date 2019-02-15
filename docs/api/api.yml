@@ -112,12 +112,23 @@ components:
     GetItemFromBagOk:
       content:
         text/plain:
-          schema:
+          type: object
+          properties:
+            itemId:
+              type: string
+            owner:
+              type: string
+            dateAvailable:
+              type: string
+            accessibleTo:
+              type: string
+            visibleTo:
+              type: string
             description: The auth info on an item from the bag store.
-            type: string
+              type: string
             example:
-              "itemId":"40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml"
-              "owner":"someone",
-              "dateAvailable":"1992-07-30",
-              "accessibleTo":"KNOWN",
-              "visibleTo":"KNOWN"
+              itemid: '"itemId":"40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml"'
+              owner: '"owner":"someone",'
+              dataAvaliable: '"dateAvailable":"1992-07-30",'
+              accessibleTo: '"accessibleTo":"KNOWN",'
+              visibleTo: '"visibleTo":"KNOWN"'
