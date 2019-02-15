@@ -15,7 +15,8 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0
 
 servers:
-  - url: 'http://test.dans.knaw.nl'
+  - url: 'http://localhost:20170'
+  - url: 'http://test.dans.knaw.nl:20170'
     description: Local test VM
 
 paths:
@@ -115,9 +116,9 @@ components:
             description: The auth info on an item from the bag store.
             type: string
             example:
-            text: >
-              "itemId":"40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml",
-              "owner":"someone",
-              "dateAvailable":"1992-07-30",
-              "accessibleTo":"KNOWN",
-              "visibleTo":"KNOWN"
+              text: >
+                "itemId":"40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml",
+                "owner":"someone",
+                "dateAvailable":"1992-07-30",
+                "accessibleTo":"KNOWN",
+                "visibleTo":"KNOWN"
