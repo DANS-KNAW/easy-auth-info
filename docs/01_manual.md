@@ -17,7 +17,6 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-
 Provides consolidated authorization info about items in a bag store.
 
 
