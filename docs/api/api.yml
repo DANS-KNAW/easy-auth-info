@@ -113,6 +113,7 @@ components:
       content:
         text/plain:
           type: object
+        description: The auth info on an item from the bag store.
           properties:
             itemId:
               type: string
@@ -123,8 +124,6 @@ components:
             accessibleTo:
               type: string
             visibleTo:
-              type: string
-            description: The auth info on an item from the bag store.
               type: string
             example:
               itemId: 40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xml
