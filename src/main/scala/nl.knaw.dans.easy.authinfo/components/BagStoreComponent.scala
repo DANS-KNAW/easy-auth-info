@@ -23,9 +23,9 @@ import nl.knaw.dans.easy.authinfo.{ BagInfo, HttpStatusException, escapePath }
 
 import scala.util.{ Failure, Success, Try }
 import scala.xml.{ Elem, XML }
-import scalaj.http.Http
 
 trait BagStoreComponent {
+  this: HttpContext =>
 
   val bagStore: BagStore
 
@@ -33,15 +33,23 @@ trait BagStoreComponent {
     val baseUri: URI
 
     def loadDDM(bagId: UUID): Try[Elem] = {
-      toURL(bagId, "metadata/dataset.xml").map(XML.load)
+      toURL(bagId, "metadata/dataset.xml").flatMap(loadXml)
     }
 
     def loadFilesXML(bagId: UUID): Try[Elem] = {
-      toURL(bagId, "metadata/files.xml").map(XML.load)
+      toURL(bagId, "metadata/files.xml").flatMap(loadXml)
     }
 
     def loadBagInfo(bagId: UUID): Try[BagInfo] = {
       toURL(bagId, "bag-info.txt").flatMap(loadBagInfo)
+    }
+
+    private def loadXml(url: URL): Try[Elem] = {
+      for {
+        response <- Try { Http(url.toString).method("GET").asString }
+        _ <- if (response.isSuccess) Success(())
+             else Failure(HttpStatusException(url.toString, response))
+      } yield XML.load(response.body)
     }
 
     private def loadBagInfo(url: URL): Try[BagInfo] = {

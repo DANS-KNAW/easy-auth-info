@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.authinfo
 
 import java.net.URI
 
-import nl.knaw.dans.easy.authinfo.components.{ AuthCacheNotConfigured, AuthCacheWithSolr, BagStoreComponent }
+import nl.knaw.dans.easy.authinfo.components.{ AuthCacheNotConfigured, AuthCacheWithSolr, BagStoreComponent, HttpContext }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.solr.client.solrj.SolrClient
 import org.apache.solr.client.solrj.impl.HttpSolrClient
@@ -27,12 +27,14 @@ import scala.util.{ Success, Try }
 /**
  * Initializes and wires together the components of this application.
  */
-trait ApplicationWiring extends BagStoreComponent with DebugEnhancedLogging {
+trait ApplicationWiring extends BagStoreComponent with HttpContext with DebugEnhancedLogging {
 
   /**
    * the application configuration
    */
   val configuration: Configuration
+
+  override val applicationVersion: String = configuration.version
 
   override val bagStore: BagStore = new BagStore {
     override val baseUri: URI = new URI(configuration.properties.getString("bag-store.url"))
