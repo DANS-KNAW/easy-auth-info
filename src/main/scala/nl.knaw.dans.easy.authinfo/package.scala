@@ -15,15 +15,11 @@
  */
 package nl.knaw.dans.easy
 
-import java.nio.file.Path
-
-import com.google.common.net.UrlEscapers
 import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiterals
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.util.NamedList
 import org.json4s.JsonAST.JValue
 
-import scala.collection.JavaConverters._
 import scala.util.Try
 import scalaj.http.HttpResponse
 
@@ -41,12 +37,6 @@ package object authinfo {
 
     // TODO candidate for dans-scala-lib
     def toOneLiner: String = s.split("\n").map(_.trim).mkString(" ")
-  }
-
-  private val pathEscaper = UrlEscapers.urlPathSegmentEscaper()
-
-  def escapePath(path: Path): String = {
-    path.asScala.map(_.toString).map(pathEscaper.escape).mkString("/")
   }
 
   case class HttpStatusException(msg: String, response: HttpResponse[String])
