@@ -21,6 +21,7 @@ import java.util.UUID
 
 import nl.knaw.dans.easy.authinfo.components.{ FileItem, FileRights }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import nl.knaw.dans.lib.encode.PathEncoding
 import org.json4s.native.JsonMethods.{ pretty, render }
 
 import scala.util.{ Failure, Success, Try }
@@ -29,11 +30,11 @@ import scala.xml.{ Elem, Node }
 trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
 
   def rightsOf(bagId: UUID, bagRelativePath: Path): Try[Option[CachedAuthInfo]] = {
-    authCache.search(s"$bagId/$bagRelativePath") match {
+    authCache.search(s"$bagId/${bagRelativePath.escapePath}") match {
       case Success(Some(doc)) => Success(Some(CachedAuthInfo(FileItem.toJson(doc))))
       case Success(None) => fromBagStore(bagId, bagRelativePath)
       case Failure(t) =>
-        logger.warn(s"cache lookup failed for [$bagId/$bagRelativePath] ${ Option(t.getMessage).getOrElse("") }")
+        logger.warn(s"cache lookup failed for [$bagId/${bagRelativePath.escapePath}] ${ Option(t.getMessage).getOrElse("") }")
         fromBagStore(bagId, bagRelativePath)
     }
   }
