@@ -68,8 +68,8 @@ trait BagStoreComponent {
     }
 
     private def toURL(bagId: UUID, path: String): Try[URL] = Try {
-      val f = Paths.get(path).escapePath
-      baseUri.resolve(s"bags/$bagId/$f").toURL
+      val escapedPath = Paths.get(path).escapePath
+      baseUri.resolve(s"bags/$bagId/$escapedPath").toURL
     }
   }
 }

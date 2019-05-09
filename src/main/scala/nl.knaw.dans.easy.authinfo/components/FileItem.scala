@@ -50,7 +50,7 @@ object FileItem {
     "easy_date_available" -> "dateAvailable"
   )
 
-  private def solr2jsonKey(key: String) = solr2JsonKeys.getOrElse(key, key)
+  private def solr2jsonKey(key: String): String = solr2JsonKeys.getOrElse(key, key)
 
   def toJson(solrDocument: SolrDocument): JsonAST.JObject = {
     val fieldValueMap = solrDocument.getFieldValueMap

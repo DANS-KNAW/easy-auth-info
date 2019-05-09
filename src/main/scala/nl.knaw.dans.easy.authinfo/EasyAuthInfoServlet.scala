@@ -33,6 +33,8 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
   with LogResponseBodyOnError
   with DebugEnhancedLogging {
 
+  private val bagNotFoundMessageRegex = ".*Bag [0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12} does not exist in BagStore.*"
+
   get("/") {
     contentType = "text/plain"
     Ok("EASY Auth Info Service running...")
@@ -69,7 +71,7 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
         Ok(pretty(render(json)))
       case Success(None) => NotFound(s"$uuid/$path does not exist")
       case Failure(HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _))) => ServiceUnavailable(message)
-      case Failure(HttpStatusException(message, HttpResponse(_, NOT_FOUND_404, _))) if message.startsWith("Bag ") => NotFound(s"$uuid does not exist")
+      case Failure(HttpStatusException(message, HttpResponse(body: String, NOT_FOUND_404, _))) if isBagDoesNotExistErrorMessage(message, body) => NotFound(s"$uuid does not exist")
       case Failure(HttpStatusException(message, HttpResponse(_, NOT_FOUND_404, _))) =>
         logger.error(s"invalid bag: $message")
         InternalServerError("not expected exception")
@@ -80,5 +82,9 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
         logger.error(t.getMessage, t)
         InternalServerError("not expected exception")
     }
+  }
+
+  private def isBagDoesNotExistErrorMessage(message: String, body: String): Boolean = {
+    message.startsWith("Bag ") || body.matches(bagNotFoundMessageRegex)
   }
 }
