@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.easy
 
+import java.util.UUID
+
 import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiterals
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.util.NamedList
@@ -38,6 +40,9 @@ package object authinfo {
     // TODO candidate for dans-scala-lib
     def toOneLiner: String = s.split("\n").map(_.trim).mkString(" ")
   }
+
+  case class BagDoesNotExistException(uuid: UUID)
+    extends Exception(s"Bag $uuid does not exist")
 
   case class HttpStatusException(msg: String, response: HttpResponse[String])
     extends Exception(s"$msg - ${ response.statusLine }, details: ${ response.body }")

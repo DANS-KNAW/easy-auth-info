@@ -65,6 +65,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
   }
 
   private def fromBagStore(bagId: UUID, path: Path): Try[Option[CachedAuthInfo]] = {
+    logger.info(s"[$bagId] item for path $path not found in autCache, trying to retrieve item from bagStore")
     bagStore
       .loadFilesXML(bagId)
       .map(getFileNode(_, path))
