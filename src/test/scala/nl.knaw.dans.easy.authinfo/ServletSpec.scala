@@ -124,7 +124,7 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
   it should "report bag not found" in {
     expectsSolrDocIsNotInCache
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Failure(BagDoesNotExistException(randomUUID))
-    shouldReturn(NOT_FOUND_404, s"$randomUUID does not exist")
+    shouldReturn(NOT_FOUND_404, s"$randomUUID/some.file does not exist")
   }
 
   it should "report file not found" in {

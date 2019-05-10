@@ -35,7 +35,7 @@ trait BagStoreComponent extends DebugEnhancedLogging {
   trait BagStore {
     val baseUri: URI
 
-    private val bagNotFoundMessageRegex = ".*Bag [0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12} does not exist in BagStore.*"
+    private val bagNotFoundMessageRegex = ".*Bag [0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12} does not exist in BagStore.*"
 
     def loadDDM(bagId: UUID): Try[Elem] = {
       logger.info(s"[$bagId] retrieving ddm.xml")
