@@ -63,6 +63,8 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeA
       override val bagStore: BagStore = mock[BagStore]
       override lazy val configuration: Configuration = new Configuration("", new PropertiesConfiguration() {
         addProperty("bag-store.url", "http://hostThatDoesNotExist:20110/")
+        addProperty("bag-store.connection-timeout-ms", "600000")
+        addProperty("bag-store.read-timeout-ms", "600000")
         addProperty("solr.url", "http://hostThatDoesNotExist")
         addProperty("solr.collection", "authinfo")
       })

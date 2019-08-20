@@ -34,6 +34,8 @@ trait BagStoreComponent extends DebugEnhancedLogging {
 
   trait BagStore {
     val baseUri: URI
+    val connTimeout: Int
+    val readTimeout: Int
 
     private val bagNotFoundMessageRegex = ".*Bag [0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12} does not exist in BagStore.*"
 
@@ -57,7 +59,7 @@ trait BagStoreComponent extends DebugEnhancedLogging {
 
     private def loadXml(url: URL): Try[Elem] = {
       for {
-        response <- Try { Http(url.toString).asString }
+        response <- Try { Http(url.toString).timeout(connTimeout, readTimeout).asString }
         _ <- if (response.isSuccess) Success(())
              else Failure(HttpStatusException(url.toString, response))
       } yield XML.loadString(response.body)
@@ -65,7 +67,7 @@ trait BagStoreComponent extends DebugEnhancedLogging {
 
     private def loadBagInfo(url: URL): Try[BagInfo] = {
       for {
-        response <- Try { Http(url.toString).asString }
+        response <- Try { Http(url.toString).timeout(connTimeout, readTimeout).asString }
         _ <- if (response.isSuccess) Success(())
              else Failure(HttpStatusException(url.toString, response))
       } yield response

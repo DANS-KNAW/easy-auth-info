@@ -38,6 +38,8 @@ trait ApplicationWiring extends BagStoreComponent with HttpContext with DebugEnh
 
   override val bagStore: BagStore = new BagStore {
     override val baseUri: URI = new URI(configuration.properties.getString("bag-store.url"))
+    override val connTimeout: Int = configuration.properties.getInt("bag-store.connection-timeout-ms")
+    override val readTimeout: Int = configuration.properties.getInt("bag-store.read-timeout-ms")
   }
 
   val authCache: AuthCacheNotConfigured = {
