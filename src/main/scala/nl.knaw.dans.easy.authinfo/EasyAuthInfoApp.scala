@@ -33,7 +33,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
     logger.info(s"[$bagId] retrieving rightsOf item $bagRelativePath")
     authCache.search(s"$bagId/$bagRelativePath") match {
       case Success(Some(doc)) =>
-        logger.info(s"[$bagId] Obtaining item for $bagRelativePath from the authCache")
+        logger.info(s"[$bagId] Obtained rightsOf item for $bagRelativePath from the authCache")
         Success(Some(CachedAuthInfo(FileItem.toJson(doc))))
       case Success(None) => fromBagStore(bagId, bagRelativePath)
       case Failure(t) =>
