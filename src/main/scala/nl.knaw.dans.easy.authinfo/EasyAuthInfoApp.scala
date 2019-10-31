@@ -37,7 +37,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
         Success(Some(CachedAuthInfo(FileItem.toJson(doc))))
       case Success(None) => fromBagStore(bagId, bagRelativePath)
       case Failure(t) =>
-        logger.warn(s"cache lookup failed for [$bagId/$bagRelativePath] ${ Option(t.getMessage).getOrElse("") }")
+        logger.warn(s"[$bagId] cache lookup failed for [$bagId/$bagRelativePath] ${ Option(t.getMessage).getOrElse("") }")
         fromBagStore(bagId, bagRelativePath)
     }
   }
