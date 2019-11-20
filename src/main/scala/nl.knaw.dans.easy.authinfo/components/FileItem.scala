@@ -27,11 +27,12 @@ import org.json4s.JsonAST.JObject
 import org.json4s.JsonDSL._
 
 import scala.collection.JavaConverters._
+import nl.knaw.dans.lib.encode._
 
 case class FileItem(id: UUID, path: Path, owner: String, rights: FileRights, dateAvailable: String) extends DebugEnhancedLogging {
 
   val solrLiterals: CacheLiterals = Seq(
-    ("id", s"$id/$path"),
+    ("id", s"$id/${path.escapePath}"),
     ("easy_owner", owner),
     ("easy_date_available", dateAvailable),
     ("easy_accessible_to", rights.accessibleTo.toString),

@@ -29,7 +29,7 @@ class FileItemSpec extends TestSupportFixture {
     val fileItem = FileItem(randomUUID, Paths.get("some/file.txt"), "someone", rights, "1992-07-30")
     pretty(render(fileItem.json)) shouldBe
       s"""{
-         |  "itemId":"$randomUUID/some/file.txt",
+         |  "itemId":"$randomUUID/some/file%2Etxt",
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
@@ -39,7 +39,7 @@ class FileItemSpec extends TestSupportFixture {
 
   "toJson" should "convert a SolrDocument without additional solr fields" in {
     val doc = new SolrDocument() {
-      addField("id", s"$randomUUID/some/file.txt")
+      addField("id", s"$randomUUID/some/file%2Etxt")
       addField("easy_owner", "someone")
       addField("easy_date_available", "1992-07-30")
       addField("easy_accessible_to", "KNOWN")
@@ -48,7 +48,7 @@ class FileItemSpec extends TestSupportFixture {
     }
     val expected =
       s"""{
-         |  "itemId":"$randomUUID/some/file.txt",
+         |  "itemId":"$randomUUID/some/file%2Etxt",
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",

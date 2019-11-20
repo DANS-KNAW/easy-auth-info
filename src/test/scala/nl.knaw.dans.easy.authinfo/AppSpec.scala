@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.authinfo
 
 import java.nio.file.Paths
 
-import nl.knaw.dans.easy.authinfo.components.SolrMocker.expectsSolrDocInCahce
+import nl.knaw.dans.easy.authinfo.components.SolrMocker.expectsSolrDocInCache
 import org.apache.solr.common.SolrDocument
 
 import scala.util.{ Failure, Success }
@@ -45,14 +45,14 @@ class AppSpec extends TestSupportFixture {
   }
 
   it should "succeed with some.txt" in {
-    expectsSolrDocInCahce(new SolrDocument() {
-      addField("id", s"$randomUUID/some.file")
+    expectsSolrDocInCache(new SolrDocument() {
+      addField("id", s"$randomUUID/some%2Efile")
       // ignoring the other fields to avoid testing random order results
       // the full content is tested with ServletSpec (which is designed to manually test all the logging)
     })
     app.jsonRightsOf(Paths.get(s"$randomUUID/some.txt")) shouldBe Success(
       s"""{
-         |  "itemId":"$randomUUID/some.file"
+         |  "itemId":"$randomUUID/some%2Efile"
          |}""".stripMargin
     )
   }

@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.authinfo
 import java.nio.file.{ Path, Paths }
 import java.util.UUID
 
+import nl.knaw.dans.lib.encode.PathEncoding
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.logging.servlet._
 import org.eclipse.jetty.http.HttpStatus._
@@ -60,16 +61,16 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
   private def respond(uuid: UUID, path: Path, rights: Try[Option[CachedAuthInfo]]): ActionResult = {
     rights match {
       case Success(Some(CachedAuthInfo(json, Some(Failure(t))))) =>
-        logger.error(s"cache update failed for [$uuid/$path] reason: ${ t.getMessage.toOneLiner }")
+        logger.error(s"cache update failed for [$uuid/${path.escapePath}] reason: ${ t.getMessage.toOneLiner }")
         Ok(pretty(render(json)))
       case Success(Some(CachedAuthInfo(json, Some(Success(_))))) =>
-        logger.info(s"cache updated for [$uuid/$path]")
+        logger.info(s"cache updated for [$uuid/${path.escapePath}]")
         Ok(pretty(render(json)))
       case Success(Some(CachedAuthInfo(json, _))) =>
         Ok(pretty(render(json)))
-      case Success(None) => NotFound(s"$uuid/$path does not exist")
+      case Success(None) => NotFound(s"$uuid/${path.escapePath} does not exist")
       case Failure(HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _))) => ServiceUnavailable(message)
-      case Failure(BagDoesNotExistException(uuid: UUID)) => NotFound(s"$uuid/$path does not exist")
+      case Failure(BagDoesNotExistException(uuid: UUID)) => NotFound(s"$uuid/${path.escapePath} does not exist")
       case Failure(t: InvalidBagException) =>
         logger.error(s"invalid bag: ${ t.getMessage }")
         InternalServerError("not expected exception")

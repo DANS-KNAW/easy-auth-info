@@ -30,12 +30,14 @@ import scala.xml.{ Elem, Node }
 trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
 
   def rightsOf(bagId: UUID, bagRelativePath: Path): Try[Option[CachedAuthInfo]] = {
-    logger.info(s"[$bagId] retrieving rightsOf item $bagRelativePath")
+    logger.info(s"[$bagId] retrieving rightsOf file $bagRelativePath")
     authCache.search(s"$bagId/${bagRelativePath.escapePath}") match {
-      case Success(Some(doc)) => Success(Some(CachedAuthInfo(FileItem.toJson(doc))))
+      case Success(Some(doc)) =>
+        logger.info(s"[$bagId] Obtained rightsOf for file $bagRelativePath from the authCache")
+        Success(Some(CachedAuthInfo(FileItem.toJson(doc))))
       case Success(None) => fromBagStore(bagId, bagRelativePath)
       case Failure(t) =>
-        logger.warn(s"cache lookup failed for [$bagId/${bagRelativePath.escapePath}] ${ Option(t.getMessage).getOrElse("") }")
+        logger.warn(s"[$bagId] cache lookup failed for file $bagRelativePath ${ Option(t.getMessage).getOrElse("") }")
         fromBagStore(bagId, bagRelativePath)
     }
   }
@@ -66,7 +68,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
   }
 
   private def fromBagStore(bagId: UUID, path: Path): Try[Option[CachedAuthInfo]] = {
-    logger.info(s"[$bagId] item for path $path not found in autCache, trying to retrieve item from bagStore")
+    logger.info(s"[$bagId] auth-info for file $path not found in authCache, trying to retrieve it from bagStore")
     bagStore
       .loadFilesXML(bagId)
       .map(getFileNode(_, path))

@@ -58,7 +58,7 @@ object SolrMocker extends MockFactory {
     mockDocList.isEmpty _ expects() once() returning true
   }
 
-  def expectsSolrDocInCahce(document: SolrDocument): Any = {
+  def expectsSolrDocInCache(document: SolrDocument): Any = {
     val cachedDoc = new util.Iterator[SolrDocument]() {
 
       override def hasNext: Boolean = true

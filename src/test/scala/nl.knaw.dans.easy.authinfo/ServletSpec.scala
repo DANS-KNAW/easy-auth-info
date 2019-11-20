@@ -60,8 +60,8 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
   }
 
   "get /:uuid/*" should "return values from the solr cache" in {
-    expectsSolrDocInCahce(new SolrDocument() {
-      addField("id", s"$randomUUID/some.file")
+    expectsSolrDocInCache(new SolrDocument() {
+      addField("id", s"$randomUUID/some%2Efile")
       addField("easy_owner", "someone")
       addField("easy_date_available", "1992-07-30")
       addField("easy_accessible_to", "KNOWN")
@@ -69,7 +69,7 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
     })
     get(s"$randomUUID/some.file") {
       // in this case the fields are returned in a random order
-      body should include(s""""itemId":"$randomUUID/some.file"""")
+      body should include(s""""itemId":"$randomUUID/some%2Efile"""")
       body should include(s""""owner":"someone"""")
       body should include(s""""dateAvailable":"1992-07-30"""")
       body should include(s""""accessibleTo":"KNOWN"""")
@@ -86,7 +86,7 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
     shouldReturn(OK_200,
       s"""{
-         |  "itemId":"$randomUUID/path/to/some.file",
+         |  "itemId":"$randomUUID/path/to/some%2Efile",
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
@@ -104,7 +104,7 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
     shouldReturn(OK_200,
       s"""{
-         |  "itemId":"$randomUUID/some.file",
+         |  "itemId":"$randomUUID/some%2Efile",
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
@@ -124,13 +124,13 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
   it should "report bag not found" in {
     expectsSolrDocIsNotInCache
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Failure(BagDoesNotExistException(randomUUID))
-    shouldReturn(NOT_FOUND_404, s"$randomUUID/some.file does not exist")
+    shouldReturn(NOT_FOUND_404, s"$randomUUID/some%2Efile does not exist")
   }
 
   it should "report file not found" in {
     expectsSolrDocIsNotInCache
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files/>)
-    shouldReturn(NOT_FOUND_404, s"$randomUUID/some.file does not exist")
+    shouldReturn(NOT_FOUND_404, s"$randomUUID/some%2Efile does not exist")
   }
 
   it should "report invalid bag: no files.xml" in {

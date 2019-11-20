@@ -20,12 +20,12 @@
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
         <artifactId>dans-scala-app-project</artifactId>
-        <version>4.0.0</version>
+        <version>5.1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>nl.knaw.dans.easy</groupId>
     <artifactId>easy-auth-info</artifactId>
-    <version>1.0.9-SNAPSHOT</version>
+    <version>1.0.10-SNAPSHOT</version>
     <name>EASY Auth Info</name>
     <url>https://github.com/DANS-KNAW/easy-auth-info</url>
     <description>Provides consolidated authorization info about items in a bag store.</description>
@@ -105,10 +105,6 @@
             <artifactId>commons-io</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-daemon</groupId>
-            <artifactId>commons-daemon</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>20.0</version>
@@ -125,22 +121,26 @@
     </dependencies>
     <repositories>
         <repository>
-            <id>DANS</id>
+            <id>dans-releases</id>
             <releases>
                 <enabled>true</enabled>
             </releases>
-            <url>http://maven.dans.knaw.nl/releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <url>https://maven.dans.knaw.nl/releases/</url>
+        </repository>
+        <repository>
+            <id>dans-snapshots</id>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <url>https://maven.dans.knaw.nl/snapshots/</url>
         </repository>
     </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>DANS</id>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <url>http://maven.dans.knaw.nl/releases</url>
-        </pluginRepository>
-    </pluginRepositories>
     <profiles>
         <profile>
             <id>rpm</id>
@@ -163,12 +163,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                        <configuration>
-                            <group>Applications/Archiving</group>
-                            <requires combine.children="append">
-                                <require>jsvc</require>
-                            </requires>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
