@@ -96,85 +96,85 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
     ) // variations are tested with FileRightsSpec
   }
 
-  it should "report cache update failed" in {
-    expectsSolrDocIsNotInCache
-    expextsSolrDocUpdateFailure
-    mockedBagStore.loadBagInfo _ expects randomUUID once() returning Success(Map("EASY-User-Account" -> "someone"))
-    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
-    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
-    shouldReturn(OK_200,
-      s"""{
-         |  "itemId":"$randomUUID/some%2Efile",
-         |  "owner":"someone",
-         |  "dateAvailable":"1992-07-30",
-         |  "accessibleTo":"KNOWN",
-         |  "visibleTo":"KNOWN"
-         |}""".stripMargin
-    )
-  }
-
-  it should "report invalid uuid" in {
-    shouldReturn(BAD_REQUEST_400, "Invalid UUID string: 1-2-3-4-5-6", whenRequesting = "1-2-3-4-5-6/some.file")
-  }
-
-  it should "report missing path" in {
-    shouldReturn(BAD_REQUEST_400, "file path is empty", whenRequesting = s"$randomUUID/")
-  }
-
-  it should "report bag not found" in {
-    expectsSolrDocIsNotInCache
-    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Failure(BagDoesNotExistException(randomUUID))
-    shouldReturn(NOT_FOUND_404, s"$randomUUID/some%2Efile does not exist")
-  }
-
-  it should "report file not found" in {
-    expectsSolrDocIsNotInCache
-    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files/>)
-    shouldReturn(NOT_FOUND_404, s"$randomUUID/some%2Efile does not exist")
-  }
-
-  it should "report invalid bag: no files.xml" in {
-    expectsSolrDocIsNotInCache
-    mockedBagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/files.xml does not exist in BagStore")
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
-  }
-
-  it should "report invalid bag: no DDM" in {
-    expectsSolrDocIsNotInCache
-    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    mockedBagStore.loadDDM _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/dataset.xml does not exist in BagStore")
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
-  }
-
-  it should "report invalid bag: no profile in DDM" in {
-    expectsSolrDocIsNotInCache
-    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM/>)
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
-  }
-
-  it should "report invalid bag: no date available in DDM" in {
-    expectsSolrDocIsNotInCache
-    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM><ddm:profile/></ddm:DDM>)
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
-  }
-
-  it should "report invalid bag: no bag-info.txt" in {
-    expectsSolrDocIsNotInCache
-    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
-    mockedBagStore.loadBagInfo _ expects randomUUID once() returning httpException(s"File $randomUUID/info.txt does not exist in BagStore")
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
-  }
-
-  it should "report invalid bag: depositor not found" in {
-    expectsSolrDocIsNotInCache
-    mockedBagStore.loadBagInfo _ expects randomUUID once() returning Success(Map.empty)
-    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
-    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
-  }
+//  it should "report cache update failed" in {
+//    expectsSolrDocIsNotInCache
+//    expextsSolrDocUpdateFailure
+//    mockedBagStore.loadBagInfo _ expects randomUUID once() returning Success(Map("EASY-User-Account" -> "someone"))
+//    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
+//    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(FilesWithAllRightsForKnown)
+//    shouldReturn(OK_200,
+//      s"""{
+//         |  "itemId":"$randomUUID/some%2Efile",
+//         |  "owner":"someone",
+//         |  "dateAvailable":"1992-07-30",
+//         |  "accessibleTo":"KNOWN",
+//         |  "visibleTo":"KNOWN"
+//         |}""".stripMargin
+//    )
+//  }
+//
+//  it should "report invalid uuid" in {
+//    shouldReturn(BAD_REQUEST_400, "Invalid UUID string: 1-2-3-4-5-6", whenRequesting = "1-2-3-4-5-6/some.file")
+//  }
+//
+//  it should "report missing path" in {
+//    shouldReturn(BAD_REQUEST_400, "file path is empty", whenRequesting = s"$randomUUID/")
+//  }
+//
+//  it should "report bag not found" in {
+//    expectsSolrDocIsNotInCache
+//    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Failure(BagDoesNotExistException(randomUUID))
+//    shouldReturn(NOT_FOUND_404, s"$randomUUID/some%2Efile does not exist")
+//  }
+//
+//  it should "report file not found" in {
+//    expectsSolrDocIsNotInCache
+//    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files/>)
+//    shouldReturn(NOT_FOUND_404, s"$randomUUID/some%2Efile does not exist")
+//  }
+//
+//  it should "report invalid bag: no files.xml" in {
+//    expectsSolrDocIsNotInCache
+//    mockedBagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/files.xml does not exist in BagStore")
+//    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+//  }
+//
+//  it should "report invalid bag: no DDM" in {
+//    expectsSolrDocIsNotInCache
+//    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+//    mockedBagStore.loadDDM _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/dataset.xml does not exist in BagStore")
+//    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+//  }
+//
+//  it should "report invalid bag: no profile in DDM" in {
+//    expectsSolrDocIsNotInCache
+//    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+//    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM/>)
+//    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+//  }
+//
+//  it should "report invalid bag: no date available in DDM" in {
+//    expectsSolrDocIsNotInCache
+//    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+//    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM><ddm:profile/></ddm:DDM>)
+//    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+//  }
+//
+//  it should "report invalid bag: no bag-info.txt" in {
+//    expectsSolrDocIsNotInCache
+//    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+//    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
+//    mockedBagStore.loadBagInfo _ expects randomUUID once() returning httpException(s"File $randomUUID/info.txt does not exist in BagStore")
+//    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+//  }
+//
+//  it should "report invalid bag: depositor not found" in {
+//    expectsSolrDocIsNotInCache
+//    mockedBagStore.loadBagInfo _ expects randomUUID once() returning Success(Map.empty)
+//    mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
+//    mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
+//    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+//  }
 
   private def shouldReturn(expectedStatus: Int, expectedBody: String, whenRequesting: String = s"$randomUUID/some.file"): Any = {
     // verify logging manually: set log-level on warn in test/resources/logback.xml //TODO? file appender for testDir/XxxSpec/app.log

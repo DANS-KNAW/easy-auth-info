@@ -35,6 +35,8 @@ package object authinfo {
    */
   case class CachedAuthInfo(authInfo: JValue, cacheUpdate: Option[Try[UpdateResponse]] = None)
 
+  case class License(licenseKey: String, licenseTitle: String)
+
   implicit class RichString(val s: String) extends AnyVal {
 
     // TODO candidate for dans-scala-lib

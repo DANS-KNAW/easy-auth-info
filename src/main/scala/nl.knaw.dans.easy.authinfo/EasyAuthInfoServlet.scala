@@ -43,7 +43,7 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
     contentType = "application/json"
     (getUUID, getPath) match {
       case (Success(_), Success(None)) => BadRequest("file path is empty")
-      case (Success(uuid), Success(Some(path))) => respond(uuid, path, app.rightsOf(uuid, path))
+      case (Success(uuid), Success(Some(path))) => respond(uuid, path, app.authInfo(uuid, path))
       case (Failure(t), _) => BadRequest(t.getMessage)
       case _ => InternalServerError("not expected exception")
     }

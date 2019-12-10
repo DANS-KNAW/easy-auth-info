@@ -15,7 +15,14 @@
 # limitations under the License.
 #
 
+HOMEDIR=home
+DATADIR=data
+
 echo -n "Pre-creating log..."
-TEMPDIR=data
-touch $TEMPDIR/easy-auth-info.log
+touch $DATADIR/easy-auth-info.log
 echo "OK"
+
+echo "Copying licenses to $HOMEDIR/cfg..."
+mvn clean generate-resources
+LICENSES=target/easy-licenses/licenses
+cp -r "$LICENSES" $HOMEDIR/cfg/lic

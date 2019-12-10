@@ -18,6 +18,7 @@ package nl.knaw.dans.easy.authinfo.components
 import java.nio.file.Path
 import java.util.UUID
 
+import nl.knaw.dans.easy.authinfo.License
 import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiterals
 import nl.knaw.dans.easy.authinfo.components.FileItem.solr2jsonKey
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -29,7 +30,7 @@ import org.json4s.JsonDSL._
 import scala.collection.JavaConverters._
 import nl.knaw.dans.lib.encode._
 
-case class FileItem(id: UUID, path: Path, owner: String, rights: FileRights, dateAvailable: String) extends DebugEnhancedLogging {
+case class FileItem(id: UUID, path: Path, owner: String, rights: FileRights, dateAvailable: String, license: License) extends DebugEnhancedLogging {
 
   val solrLiterals: CacheLiterals = Seq(
     ("id", s"$id/${path.escapePath}"),
@@ -37,6 +38,8 @@ case class FileItem(id: UUID, path: Path, owner: String, rights: FileRights, dat
     ("easy_date_available", dateAvailable),
     ("easy_accessible_to", rights.accessibleTo.toString),
     ("easy_visible_to", rights.visibleTo.toString),
+    ("easy_license_key", license.licenseKey),
+    ("easy_license_title", license.licenseTitle),
   )
   val json: JObject = solrLiterals
     .map { case (key, value) => (solr2jsonKey(key), value) }
@@ -48,7 +51,9 @@ object FileItem {
     "easy_owner" -> "owner",
     "easy_visible_to" -> "visibleTo",
     "easy_accessible_to" -> "accessibleTo",
-    "easy_date_available" -> "dateAvailable"
+    "easy_date_available" -> "dateAvailable",
+    "easy_license_key" -> "licenseKey",
+    "easy_license_title" -> "licenseTitle"
   )
 
   private def solr2jsonKey(key: String): String = solr2JsonKeys.getOrElse(key, key)

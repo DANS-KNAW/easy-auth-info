@@ -32,6 +32,7 @@
     <inceptionYear>2017</inceptionYear>
     <properties>
         <main-class>nl.knaw.dans.easy.authinfo.Command</main-class>
+        <easy.licenses.version>1.0.5</easy.licenses.version>
     </properties>
     <scm>
         <developerConnection>scm:git:https://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
@@ -141,6 +142,40 @@
             <url>https://maven.dans.knaw.nl/snapshots/</url>
         </repository>
     </repositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>nl.knaw.dans.easy</groupId>
+                                    <artifactId>easy-licenses</artifactId>
+                                    <version>${easy.licenses.version}</version>
+                                    <outputDirectory>${project.build.directory}/easy-licenses</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>nl.knaw.dans.easy</groupId>
+                                    <artifactId>easy-licenses</artifactId>
+                                    <version>${easy.licenses.version}</version>
+                                    <outputDirectory>src/test/resources/debug-config</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
     <profiles>
         <profile>
             <id>rpm</id>
@@ -155,6 +190,20 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>rpm-maven-plugin</artifactId>
+                        <configuration>
+                            <group>Applications/Archiving</group>
+                            <mappings combine.children="append">
+                                <mapping>
+                                    <directory>/etc/opt/${dans-provider-name}/${project.artifactId}/lic</directory>
+                                    <configuration>${rpm-replace-configuration}</configuration>
+                                    <sources>
+                                        <source>
+                                            <location>target/easy-licenses/licenses</location>
+                                        </source>
+                                    </sources>
+                                </mapping>
+                            </mappings>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-rpm</id>

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Archiver-Version: Plexus Archiver
+Built-By: RichardvanHeest
+Class-Path: ../lib/scala-library-2.12.3.jar
+Created-By: Apache Maven 3.6.3
+Build-Jdk: 1.8.0_181
+Main-Class: NoMainClass
+
