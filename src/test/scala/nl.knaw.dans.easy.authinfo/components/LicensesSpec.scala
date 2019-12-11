@@ -39,7 +39,12 @@ class LicensesSpec extends TestSupportFixture {
         <dcterms:rightsHolder>I Lastname</dcterms:rightsHolder>
     </ddm:dcmiMetadata>
 
-  it should "return DANS license when there is no dcmiMetadata element" in {
+  "getLicense" should "return CC0 license when there is no dcmiMetadata element and dataset is Open Access" in {
+    app.configuration.licenses.getLicense(None, FileRights("ANONYMOUS", "ANONYMOUS")) shouldBe
+      Success(License("http://creativecommons.org/publicdomain/zero/1.0", "CC0-1.0.html"))
+  }
+
+  it should "return DANS license when there is no dcmiMetadata element and dataset is not Open Access" in {
     app.configuration.licenses.getLicense(None, FileRights("KNOWN", "KNOWN")) shouldBe
       Success(License("http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf", "DANS_Licence_UK.pdf"))
   }
