@@ -34,7 +34,9 @@ class FileItemSpec extends TestSupportFixture {
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
-         |  "visibleTo":"ANONYMOUS"
+         |  "visibleTo":"ANONYMOUS",
+         |  "licenseKey":"http://opensource.org/licenses/MIT",
+         |  "licenseTitle":"MIT.txt"
          |}""".stripMargin
   }
 
@@ -45,6 +47,8 @@ class FileItemSpec extends TestSupportFixture {
       addField("easy_date_available", "1992-07-30")
       addField("easy_accessible_to", "KNOWN")
       addField("easy_visible_to", "ANONYMOUS")
+      addField("easy_license_key", "http://opensource.org/licenses/MIT")
+      addField("easy_license_title", "MIT.txt")
       addField("solr_extras", "abcd")
     }
     val expected =
@@ -53,7 +57,10 @@ class FileItemSpec extends TestSupportFixture {
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
-         |  "visibleTo":"ANONYMOUS"
+         |  "visibleTo":"ANONYMOUS",
+         |  "licenseKey":"http://opensource.org/licenses/MIT",
+         |  "licenseTitle":"MIT.txt"
+         |
          |}""".stripMargin
 
     checkSameHashMaps(expected, FileItem.toJson(doc))

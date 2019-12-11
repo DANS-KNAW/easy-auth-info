@@ -162,12 +162,6 @@
                                     <version>${easy.licenses.version}</version>
                                     <outputDirectory>${project.build.directory}/easy-licenses</outputDirectory>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>nl.knaw.dans.easy</groupId>
-                                    <artifactId>easy-licenses</artifactId>
-                                    <version>${easy.licenses.version}</version>
-                                    <outputDirectory>src/test/resources/debug-config</outputDirectory>
-                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>

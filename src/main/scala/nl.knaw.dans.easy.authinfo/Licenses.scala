@@ -15,8 +15,8 @@
  */
 package nl.knaw.dans.easy.authinfo
 
-import nl.knaw.dans.easy.authinfo.components.RightsFor.ANONYMOUS
 import nl.knaw.dans.easy.authinfo.components.FileRights
+import nl.knaw.dans.easy.authinfo.components.RightsFor.ANONYMOUS
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.commons.configuration.PropertiesConfiguration
 
@@ -28,22 +28,19 @@ class Licenses(licenses: PropertiesConfiguration) extends DebugEnhancedLogging {
   private val CC_0_LICENSE = "http://creativecommons.org/publicdomain/zero/1.0"
   private val DANS_LICENSE = "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf"
 
-  def getLicense(dcmiMetadata: Node, rights: FileRights): Try[License] = Try {
-
+  def getLicense(dcmiMetadata: Option[Node], rights: FileRights): Try[License] = Try {
     def getValue(tag: String): Option[String] = {
-      if (dcmiMetadata.isEmpty)
-        None
-      else
-        (dcmiMetadata \ tag).headOption.map(_.text)
+      dcmiMetadata.flatMap(node => (node \ tag).headOption.map(_.text))
     }
 
     val licenseKey = getValue("license")
-    if (licenseKey.nonEmpty)
-      License(licenseKey.get, getLicenseTitle(licenseKey.get))
-    else {
-      val key = if (rights.accessibleTo == ANONYMOUS.toString) CC_0_LICENSE else DANS_LICENSE
-      License(key, getLicenseTitle(key))
-    }
+    licenseKey.map(key => License(key, getLicenseTitle(key))).getOrElse(getDefaultLicense(rights))
+  }
+
+  private def getDefaultLicense(rights: FileRights): License = {
+    val key = if (rights.accessibleTo == ANONYMOUS.toString) CC_0_LICENSE
+              else DANS_LICENSE
+    License(key, getLicenseTitle(key))
   }
 
   private def getLicenseTitle(licenseKey: String): String = {

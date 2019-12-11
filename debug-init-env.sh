@@ -23,6 +23,6 @@ touch $DATADIR/easy-auth-info.log
 echo "OK"
 
 echo "Copying licenses to $HOMEDIR/cfg..."
-mvn clean generate-resources
+mvn generate-resources
 LICENSES=target/easy-licenses/licenses
 cp -r "$LICENSES" $HOMEDIR/cfg/lic
