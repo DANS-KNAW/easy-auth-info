@@ -26,7 +26,7 @@ class AppSpec extends TestSupportFixture {
 
   private val app = mockApp
 
-  "rightsOf(path)" should "fail with /" in {
+  "authInfo(path)" should "fail with /" in {
     inside(app.jsonAuthInfo(Paths.get("/"))) {
       case Failure(e) => e should have message "can't extract valid UUID from [/]"
     }

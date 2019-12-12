@@ -58,8 +58,8 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
     multiParams("splat").find(_.trim.nonEmpty).map(Paths.get(_))
   }
 
-  private def respond(uuid: UUID, path: Path, rights: Try[Option[CachedAuthInfo]]): ActionResult = {
-    rights match {
+  private def respond(uuid: UUID, path: Path, authInfo: Try[Option[CachedAuthInfo]]): ActionResult = {
+    authInfo match {
       case Success(Some(CachedAuthInfo(json, Some(Failure(t))))) =>
         logger.error(s"cache update failed for [$uuid/${path.escapePath}] reason: ${ t.getMessage.toOneLiner }")
         Ok(pretty(render(json)))
