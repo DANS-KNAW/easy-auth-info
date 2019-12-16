@@ -103,3 +103,7 @@ components:
           type: string
         visibleTo:
           type: string
+        licenseKey:
+          type: string
+        licenseTitle:
+          type: string

@@ -56,7 +56,9 @@ curl 'http://localhost:20170/40594b6d-8378-4260-b96b-13b57beadf7c/data/pakbon.xm
   "owner":"someone",
   "dateAvailable":"1992-07-30",
   "accessibleTo":"KNOWN",
-  "visibleTo":"KNOWN"
+  "visibleTo":"KNOWN",
+  "licenseKey":"http://opensource.org/licenses/MIT",
+  "licenseTitle":"MIT.txt"
 }
 ```
 
