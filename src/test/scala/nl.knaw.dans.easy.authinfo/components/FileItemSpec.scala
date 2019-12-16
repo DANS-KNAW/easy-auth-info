@@ -60,7 +60,6 @@ class FileItemSpec extends TestSupportFixture {
          |  "visibleTo":"ANONYMOUS",
          |  "licenseKey":"http://opensource.org/licenses/MIT",
          |  "licenseTitle":"MIT.txt"
-         |
          |}""".stripMargin
 
     checkSameHashMaps(expected, FileItem.toJson(doc))

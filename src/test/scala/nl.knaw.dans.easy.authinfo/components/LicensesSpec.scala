@@ -46,7 +46,7 @@ class LicensesSpec extends TestSupportFixture {
 
   it should "return DANS license when there is no dcmiMetadata element and dataset is not Open Access" in {
     app.configuration.licenses.getLicense(None, FileRights("KNOWN", "KNOWN")) shouldBe
-      Success(License("http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf", "DANS_Licence_UK.pdf"))
+      Success(License("http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf=DANS_Licence_UK.pdf", "DANS_Licence_UK.pdf"))
   }
 
   it should "return CC0 license when there is no license in dcmiMetadata element and dataset is Open Access" in {
@@ -56,7 +56,7 @@ class LicensesSpec extends TestSupportFixture {
 
   it should "return DANS license when there is no license in dcmiMetadata element and dataset is not Open Access" in {
     app.configuration.licenses.getLicense(Option(dcmiMetadataNoLicense), FileRights("KNOWN", "KNOWN")) shouldBe
-      Success(License("http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf", "DANS_Licence_UK.pdf"))
+      Success(License("http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf=DANS_Licence_UK.pdf", "DANS_Licence_UK.pdf"))
   }
 
   it should "return the license in dcmiMetadata element when it is given in dataset.xml" in {

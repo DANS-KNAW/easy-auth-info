@@ -53,7 +53,7 @@ object FileItem {
     "easy_accessible_to" -> "accessibleTo",
     "easy_date_available" -> "dateAvailable",
     "easy_license_key" -> "licenseKey",
-    "easy_license_title" -> "licenseTitle"
+    "easy_license_title" -> "licenseTitle",
   )
 
   private def solr2jsonKey(key: String): String = solr2JsonKeys.getOrElse(key, key)

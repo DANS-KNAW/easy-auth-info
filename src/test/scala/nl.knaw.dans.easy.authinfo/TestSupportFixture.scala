@@ -72,7 +72,7 @@ trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeA
           addProperty("http://creativecommons.org/publicdomain/zero/1.0", "CC0-1.0.html")
           addProperty("http://opensource.org/licenses/MIT", "MIT.txt")
           addProperty("http://creativecommons.org/licenses/by/4.0", "CC-BY-4.0.html")
-          addProperty("http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf", "DANS_Licence_UK.pdf")
+          addProperty("http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf=DANS_Licence_UK.pdf", "DANS_Licence_UK.pdf")
         }
         ))
       override val authCache: AuthCacheNotConfigured = new AuthCacheWithSolr() {

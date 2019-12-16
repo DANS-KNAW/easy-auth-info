@@ -86,7 +86,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
     for {
       ddm <- bagStore.loadDDM(bagId)
       ddmProfile <- getTag(ddm, "profile", bagId)
-      dcmiMetadata <- getOptionalTag(ddm, "dcmiMetadata")
+      dcmiMetadata = getOptionalTag(ddm, "dcmiMetadata")
       dateAvailable <- getTag(ddmProfile, "available", bagId).map(_.text)
       rights <- FileRights.get(ddmProfile, fileNode)
       license <- configuration.licenses.getLicense(dcmiMetadata, rights)
@@ -100,7 +100,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       .recoverWith { case _ => Failure(InvalidBagException(s"<ddm:$tag> not found in $bagId/dataset.xml")) }
   }
 
-  private def getOptionalTag(node: Node, tag: String): Try[Option[Node]] = Try {
+  private def getOptionalTag(node: Node, tag: String): Option[Node] = {
     (node \ tag).headOption
   }
 

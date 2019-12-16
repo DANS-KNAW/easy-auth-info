@@ -26,15 +26,14 @@ import scala.xml.Node
 class Licenses(licenses: PropertiesConfiguration) extends DebugEnhancedLogging {
 
   private val CC_0_LICENSE = "http://creativecommons.org/publicdomain/zero/1.0"
-  private val DANS_LICENSE = "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSGeneralconditionsofuseUKDEF.pdf"
+  private val DANS_LICENSE = "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf=DANS_Licence_UK.pdf"
 
   def getLicense(dcmiMetadata: Option[Node], rights: FileRights): Try[License] = Try {
-    def getValue(tag: String): Option[String] = {
-      dcmiMetadata.flatMap(node => (node \ tag).headOption.map(_.text))
-    }
-
-    val licenseKey = getValue("license")
-    licenseKey.map(key => License(key, getLicenseTitle(key))).getOrElse(getDefaultLicense(rights))
+    dcmiMetadata
+      .flatMap(node => (node \ "license").headOption)
+      .map(_.text)
+      .map(key => License(key, getLicenseTitle(key)))
+      .getOrElse { getDefaultLicense(rights) }
   }
 
   private def getDefaultLicense(rights: FileRights): License = {
