@@ -15,7 +15,8 @@
 # limitations under the License.
 #
 
+DATADIR=data
+
 echo -n "Pre-creating log..."
-TEMPDIR=data
-touch $TEMPDIR/easy-auth-info.log
+touch $DATADIR/easy-auth-info.log
 echo "OK"

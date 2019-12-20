@@ -17,7 +17,7 @@ package nl.knaw.dans.easy.authinfo.components
 
 import java.nio.file.Paths
 
-import nl.knaw.dans.easy.authinfo.TestSupportFixture
+import nl.knaw.dans.easy.authinfo.{ License, TestSupportFixture }
 import nl.knaw.dans.easy.authinfo.components.RightsFor._
 import org.apache.solr.common.SolrDocument
 import org.json4s.native.JsonMethods._
@@ -26,14 +26,17 @@ class FileItemSpec extends TestSupportFixture {
 
   "constructor" should "produce proper json" in {
     val rights = FileRights(KNOWN.toString, ANONYMOUS.toString)
-    val fileItem = FileItem(randomUUID, Paths.get("some/file.txt"), "someone", rights, "1992-07-30")
+    val license = License("http://opensource.org/licenses/MIT", "MIT.txt")
+    val fileItem = FileItem(randomUUID, Paths.get("some/file.txt"), "someone", rights, "1992-07-30", license)
     pretty(render(fileItem.json)) shouldBe
       s"""{
          |  "itemId":"$randomUUID/some/file%2Etxt",
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
-         |  "visibleTo":"ANONYMOUS"
+         |  "visibleTo":"ANONYMOUS",
+         |  "licenseKey":"http://opensource.org/licenses/MIT",
+         |  "licenseTitle":"MIT.txt"
          |}""".stripMargin
   }
 
@@ -44,6 +47,8 @@ class FileItemSpec extends TestSupportFixture {
       addField("easy_date_available", "1992-07-30")
       addField("easy_accessible_to", "KNOWN")
       addField("easy_visible_to", "ANONYMOUS")
+      addField("easy_license_key", "http://opensource.org/licenses/MIT")
+      addField("easy_license_title", "MIT.txt")
       addField("solr_extras", "abcd")
     }
     val expected =
@@ -52,7 +57,9 @@ class FileItemSpec extends TestSupportFixture {
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
-         |  "visibleTo":"ANONYMOUS"
+         |  "visibleTo":"ANONYMOUS",
+         |  "licenseKey":"http://opensource.org/licenses/MIT",
+         |  "licenseTitle":"MIT.txt"
          |}""".stripMargin
 
     checkSameHashMaps(expected, FileItem.toJson(doc))

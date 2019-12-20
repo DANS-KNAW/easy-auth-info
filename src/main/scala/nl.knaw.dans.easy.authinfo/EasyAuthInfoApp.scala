@@ -20,8 +20,8 @@ import java.nio.file.Path
 import java.util.UUID
 
 import nl.knaw.dans.easy.authinfo.components.{ FileItem, FileRights }
-import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.encode.PathEncoding
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.json4s.native.JsonMethods.{ pretty, render }
 
 import scala.util.{ Failure, Success, Try }
@@ -29,11 +29,11 @@ import scala.xml.{ Elem, Node }
 
 trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with ApplicationWiring {
 
-  def rightsOf(bagId: UUID, bagRelativePath: Path): Try[Option[CachedAuthInfo]] = {
-    logger.info(s"[$bagId] retrieving rightsOf file $bagRelativePath")
-    authCache.search(s"$bagId/${bagRelativePath.escapePath}") match {
+  def authInfo(bagId: UUID, bagRelativePath: Path): Try[Option[CachedAuthInfo]] = {
+    logger.info(s"[$bagId] retrieving authorization info of file $bagRelativePath")
+    authCache.search(s"$bagId/${ bagRelativePath.escapePath }") match {
       case Success(Some(doc)) =>
-        logger.info(s"[$bagId] Obtained rightsOf for file $bagRelativePath from the authCache")
+        logger.info(s"[$bagId] Obtained authorization info for file $bagRelativePath from the authCache")
         Success(Some(CachedAuthInfo(FileItem.toJson(doc))))
       case Success(None) => fromBagStore(bagId, bagRelativePath)
       case Failure(t) =>
@@ -43,16 +43,16 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
   }
 
   /** @param fullPath <UUID>/<bag-relative-path> */
-  def jsonRightsOf(fullPath: Path): Try[String] = rightsOf(fullPath).flatMap {
-    case Some(CachedAuthInfo(rights, _)) => Success(pretty(render(rights)))
+  def jsonAuthInfo(fullPath: Path): Try[String] = authInfo(fullPath).flatMap {
+    case Some(CachedAuthInfo(authInfo, _)) => Success(pretty(render(authInfo)))
     case None => Failure(new FileNotFoundException(fullPath.toString))
   }
 
   /** @param fullPath <UUID>/<bag-relative-path> */
-  private def rightsOf(fullPath: Path): Try[Option[CachedAuthInfo]] = for {
+  private def authInfo(fullPath: Path): Try[Option[CachedAuthInfo]] = for {
     uuid <- extractUUID(fullPath)
     subPath <- extractBagRelativePath(fullPath)
-    cachedAuthInfo <- rightsOf(uuid, subPath)
+    cachedAuthInfo <- authInfo(uuid, subPath)
   } yield cachedAuthInfo
 
   /** @param fullPath <UUID>/<bag-relative-path> */
@@ -86,16 +86,22 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
     for {
       ddm <- bagStore.loadDDM(bagId)
       ddmProfile <- getTag(ddm, "profile", bagId)
+      dcmiMetadata = getOptionalTag(ddm, "dcmiMetadata")
       dateAvailable <- getTag(ddmProfile, "available", bagId).map(_.text)
       rights <- FileRights.get(ddmProfile, fileNode)
+      license <- configuration.licenses.getLicense(dcmiMetadata, rights)
       bagInfo <- bagStore.loadBagInfo(bagId)
       owner <- getDepositor(bagInfo, bagId)
-    } yield FileItem(bagId, path, owner, rights, dateAvailable)
+    } yield FileItem(bagId, path, owner, rights, dateAvailable, license)
   }
 
   private def getTag(node: Node, tag: String, bagId: UUID): Try[Node] = {
     Try { (node \ tag).head }
       .recoverWith { case _ => Failure(InvalidBagException(s"<ddm:$tag> not found in $bagId/dataset.xml")) }
+  }
+
+  private def getOptionalTag(node: Node, tag: String): Option[Node] = {
+    (node \ tag).headOption
   }
 
   private def getDepositor(bagInfoMap: BagInfo, bagId: UUID): Try[String] = {

@@ -42,7 +42,7 @@ object Command extends App with DebugEnhancedLogging {
   private def runCommand(app: EasyAuthInfoApp): Try[FeedBackMessage] = {
     (commandLine.path.isDefined, commandLine.subcommand) match {
       case (false, Some(commandLine.runService)) => runAsService(app)
-      case (true, None) => app.jsonRightsOf(commandLine.path())
+      case (true, None) => app.jsonAuthInfo(commandLine.path())
       case (false, None) => Failure(new IllegalArgumentException(s"No command nor argument specified"))
       case _ => Failure(new IllegalArgumentException(s"Invalid command, options or arguments: " + commandLine.args.mkString(" ")))
     }

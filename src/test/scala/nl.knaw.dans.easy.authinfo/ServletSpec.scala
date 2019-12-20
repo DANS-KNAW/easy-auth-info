@@ -90,7 +90,9 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
-         |  "visibleTo":"KNOWN"
+         |  "visibleTo":"KNOWN",
+         |  "licenseKey":"http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf=DANS_Licence_UK.pdf",
+         |  "licenseTitle":"DANS_Licence_UK.pdf"
          |}""".stripMargin,
       whenRequesting = s"$randomUUID/path/to/some.file"
     ) // variations are tested with FileRightsSpec
@@ -108,7 +110,9 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
          |  "owner":"someone",
          |  "dateAvailable":"1992-07-30",
          |  "accessibleTo":"KNOWN",
-         |  "visibleTo":"KNOWN"
+         |  "visibleTo":"KNOWN",
+         |  "licenseKey":"http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf=DANS_Licence_UK.pdf",
+         |  "licenseTitle":"DANS_Licence_UK.pdf"
          |}""".stripMargin
     )
   }
