@@ -32,7 +32,7 @@
     <inceptionYear>2017</inceptionYear>
     <properties>
         <main-class>nl.knaw.dans.easy.authinfo.Command</main-class>
-        <easy.licenses.version>1.0.5</easy.licenses.version>
+        <easy.licenses.version>1.0.6</easy.licenses.version>
     </properties>
     <scm>
         <developerConnection>scm:git:https://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
