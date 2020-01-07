@@ -26,7 +26,7 @@ import scala.xml.Node
 class Licenses(licenses: PropertiesConfiguration) extends DebugEnhancedLogging {
 
   private val CC_0_LICENSE = "http://creativecommons.org/publicdomain/zero/1.0"
-  private val DANS_LICENSE = "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/dans-licence.pdf=DANS_Licence_UK.pdf"
+  private val DANS_LICENSE = "http://dans.knaw.nl/en/about/organisation-and-policy/legal-information/DANSLicence.pdf=DANS_Licence_UK.pdf"
 
   def getLicense(dcmiMetadata: Option[Node], rights: FileRights): Try[License] = Try {
     dcmiMetadata
