@@ -105,7 +105,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       .recoverWith { case _ => Failure(InvalidBagException(s"'EASY-User-Account' (case sensitive) not found in $bagId/bag-info.txt")) }
   }
 
-  def getFileNode(xmlDoc: Elem, path: Path): Option[Node] = {
+  private def getFileNode(xmlDoc: Elem, path: Path): Option[Node] = {
     (xmlDoc \ "file").find(_
       .attribute("filepath")
       .map(_.text)
