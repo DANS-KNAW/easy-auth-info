@@ -19,6 +19,7 @@ import java.io.FileNotFoundException
 import java.nio.file.Path
 import java.util.UUID
 
+import nl.knaw.dans.easy.authinfo.Command.FeedBackMessage
 import nl.knaw.dans.easy.authinfo.components.{ FileItem, FileRights }
 import nl.knaw.dans.lib.encode.PathEncoding
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
