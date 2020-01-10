@@ -49,6 +49,19 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
     case None => Failure(new FileNotFoundException(fullPath.toString))
   }
 
+  def delete(query: String): Try[FeedBackMessage] = {
+    logger.info(s"deleting documents with query '$query'")
+    for {
+      _ <- authCache.delete(query)
+      _ <- authCache.commit()
+    } yield s"Deleted documents with query '$query'"
+  } recoverWith {
+    case t: CacheCommitException => Failure(t)
+    case t =>
+      authCache.commit()
+      Failure(t)
+  }
+
   /** @param fullPath <UUID>/<bag-relative-path> */
   private def authInfo(fullPath: Path): Try[Option[CachedAuthInfo]] = for {
     uuid <- extractUUID(fullPath)

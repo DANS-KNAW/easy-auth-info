@@ -29,6 +29,8 @@ trait AuthCacheNotConfigured extends AutoCloseable {
 
   def submit(cacheFields: CacheLiterals): Try[UpdateResponse] = notImplemented
 
+  def delete(query: String): Try[UpdateResponse] = notImplemented
+
   def commit(): Try[UpdateResponse] = notImplemented
 
   override def close(): Unit = ()

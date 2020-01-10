@@ -41,6 +41,7 @@ object Command extends App with DebugEnhancedLogging {
     commandLine.subcommand
       .collect {
         case get @ commandLine.get => app.jsonAuthInfo(get.itemId())
+        case delete @ commandLine.delete => app.delete(delete.query())
         case commandLine.runService => runAsService(app)
       }
       .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
