@@ -140,28 +140,28 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
   it should "report invalid bag: no files.xml" in {
     expectsSolrDocIsNotInCache
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/files.xml does not exist in BagStore")
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+    shouldReturn(INTERNAL_SERVER_ERROR_500, "unexpected error")
   }
 
   it should "report invalid bag: no DDM" in {
     expectsSolrDocIsNotInCache
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     mockedBagStore.loadDDM _ expects randomUUID once() returning httpException(s"File $randomUUID/metadata/dataset.xml does not exist in BagStore")
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+    shouldReturn(INTERNAL_SERVER_ERROR_500, "unexpected error")
   }
 
   it should "report invalid bag: no profile in DDM" in {
     expectsSolrDocIsNotInCache
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     mockedBagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM/>)
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+    shouldReturn(INTERNAL_SERVER_ERROR_500, s"bag $randomUUID appears to be invalid")
   }
 
   it should "report invalid bag: no date available in DDM" in {
     expectsSolrDocIsNotInCache
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     mockedBagStore.loadDDM _ expects randomUUID once() returning Success(<ddm:DDM><ddm:profile/></ddm:DDM>)
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+    shouldReturn(INTERNAL_SERVER_ERROR_500, s"bag $randomUUID appears to be invalid")
   }
 
   it should "report invalid bag: no bag-info.txt" in {
@@ -169,7 +169,7 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
     mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
     mockedBagStore.loadBagInfo _ expects randomUUID once() returning httpException(s"File $randomUUID/info.txt does not exist in BagStore")
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+    shouldReturn(INTERNAL_SERVER_ERROR_500, "unexpected error")
   }
 
   it should "report invalid bag: depositor not found" in {
@@ -177,7 +177,7 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
     mockedBagStore.loadBagInfo _ expects randomUUID once() returning Success(Map.empty)
     mockedBagStore.loadDDM _ expects randomUUID once() returning Success(openAccessDDM)
     mockedBagStore.loadFilesXML _ expects randomUUID once() returning Success(<files><file filepath="some.file"/></files>)
-    shouldReturn(INTERNAL_SERVER_ERROR_500, s"not expected exception")
+    shouldReturn(INTERNAL_SERVER_ERROR_500, s"bag $randomUUID appears to be invalid")
   }
 
   private def shouldReturn(expectedStatus: Int, expectedBody: String, whenRequesting: String = s"$randomUUID/some.file"): Any = {

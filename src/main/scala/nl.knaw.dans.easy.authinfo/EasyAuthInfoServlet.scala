@@ -61,10 +61,10 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
   private def respond(uuid: UUID, path: Path, authInfo: Try[Option[CachedAuthInfo]]): ActionResult = {
     authInfo match {
       case Success(Some(CachedAuthInfo(json, Some(Failure(t))))) =>
-        logger.error(s"cache update failed for [$uuid/${path.escapePath}] reason: ${ t.getMessage.toOneLiner }")
+        logger.error(s"[$uuid] cache update failed for [$uuid/${path.escapePath}] reason: ${ t.getMessage.toOneLiner }")
         Ok(pretty(render(json)))
       case Success(Some(CachedAuthInfo(json, Some(Success(_))))) =>
-        logger.info(s"cache updated for [$uuid/${path.escapePath}]")
+        logger.info(s"[$uuid] cache updated for [$uuid/${path.escapePath}]")
         Ok(pretty(render(json)))
       case Success(Some(CachedAuthInfo(json, _))) =>
         Ok(pretty(render(json)))
@@ -72,11 +72,11 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
       case Failure(HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _))) => ServiceUnavailable(message)
       case Failure(BagDoesNotExistException(uuid: UUID)) => NotFound(s"$uuid/${path.escapePath} does not exist")
       case Failure(t: InvalidBagException) =>
-        logger.error(s"invalid bag: ${ t.getMessage }")
-        InternalServerError("not expected exception")
+        logger.error(s"[$uuid] invalid bag: ${ t.getMessage }")
+        InternalServerError(s"bag $uuid appears to be invalid")
       case Failure(t) =>
-        logger.error(t.getMessage, t)
-        InternalServerError("not expected exception")
+        logger.error(s"[$uuid] unexpected error: ${t.getMessage}", t)
+        InternalServerError("unexpected error")
     }
   }
 }
