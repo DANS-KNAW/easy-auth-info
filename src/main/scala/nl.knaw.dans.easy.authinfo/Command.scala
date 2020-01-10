@@ -28,9 +28,7 @@ import scala.util.{ Failure, Try }
 object Command extends App with DebugEnhancedLogging {
   type FeedBackMessage = String
   val configuration = Configuration(Paths.get(System.getProperty("app.home")))
-  val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration) {
-    verify()
-  }
+  val commandLine: CommandLineOptions = new CommandLineOptions(args, configuration)
   val app = EasyAuthInfoApp(configuration)
 
   managed(app)
@@ -40,12 +38,12 @@ object Command extends App with DebugEnhancedLogging {
     .doIfFailure { case NonFatal(e) => println(s"FAILED: ${ e.getClass.getName } ${ e.getMessage }") }
 
   private def runCommand(app: EasyAuthInfoApp): Try[FeedBackMessage] = {
-    (commandLine.path.isDefined, commandLine.subcommand) match {
-      case (false, Some(commandLine.runService)) => runAsService(app)
-      case (true, None) => app.jsonAuthInfo(commandLine.path())
-      case (false, None) => Failure(new IllegalArgumentException(s"No command nor argument specified"))
-      case _ => Failure(new IllegalArgumentException(s"Invalid command, options or arguments: " + commandLine.args.mkString(" ")))
-    }
+    commandLine.subcommand
+      .collect {
+        case get @ commandLine.get => app.jsonAuthInfo(get.itemId())
+        case commandLine.runService => runAsService(app)
+      }
+      .getOrElse(Failure(new IllegalArgumentException(s"Unknown command: ${ commandLine.subcommand }")))
   }
 
   private def runAsService(app: EasyAuthInfoApp): Try[FeedBackMessage] = Try {
