@@ -57,9 +57,11 @@ trait AuthCacheWithSolr extends AuthCacheNotConfigured with DebugEnhancedLogging
       .recoverWith { case t => Failure(CacheUpdateException(solrFields, t)) }
   }
 
-  override def close(): Try[Unit] = {
+
+  override def close(): Unit = {
+    logger.info(s"closing SOLR cache")
     solrClient.commit() // don't care about a failure, loosing a few pending changes is a minor performance loss
-    Try(solrClient.close())
+    solrClient.close()
   }
 
   private def isParseException(t: HttpSolrClient.RemoteSolrException) = {
