@@ -91,7 +91,10 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
         case None => Success(None) // TODO cache repeatedly requested but not found bags/files?
         case Some(filesXmlItem) =>
           collectInfo(bagId, path, filesXmlItem).map { fileItem =>
-            val cacheUpdate = authCache.submit(fileItem.solrLiterals)
+            val cacheUpdate = for {
+              cacheUpdate <- authCache.submit(fileItem.solrLiterals)
+              _ <- authCache.commit()
+            } yield cacheUpdate
             Some(CachedAuthInfo(fileItem.json, Some(cacheUpdate)))
           }
       }
