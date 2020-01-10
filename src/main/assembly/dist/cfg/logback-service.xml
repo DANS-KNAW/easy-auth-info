@@ -18,7 +18,7 @@
     </appender>
     <root level="warn">
         <appender-ref ref="FILE"/>
-        <appender-ref ref="JOURNAL" />
+        <appender-ref ref="JOURNAL"/>
     </root>
-    <logger name="nl.knaw.dans.easy" level="info" />
+    <logger name="nl.knaw.dans.easy" level="info"/>
 </configuration>
