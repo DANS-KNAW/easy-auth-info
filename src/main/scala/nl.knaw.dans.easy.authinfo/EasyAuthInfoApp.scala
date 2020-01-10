@@ -44,7 +44,8 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
 
   /** @param fullPath <UUID>/<bag-relative-path> */
   def jsonAuthInfo(fullPath: Path): Try[String] = authInfo(fullPath).flatMap {
-    case Some(CachedAuthInfo(authInfo, _)) => Success(pretty(render(authInfo)))
+    case Some(CachedAuthInfo(authInfo, Some(Success(_)) | None)) => Success(pretty(render(authInfo)))
+    case Some(CachedAuthInfo(_, Some(Failure(e)))) => Failure(e)
     case None => Failure(new FileNotFoundException(fullPath.toString))
   }
 
