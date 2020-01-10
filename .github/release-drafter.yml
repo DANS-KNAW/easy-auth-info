@@ -1,0 +1,4 @@
+change-template: '* $TITLE (#$NUMBER)'
+sort-direction: ascending
+template: |
+  $CHANGES
