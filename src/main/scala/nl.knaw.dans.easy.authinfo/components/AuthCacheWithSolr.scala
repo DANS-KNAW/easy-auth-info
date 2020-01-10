@@ -61,7 +61,7 @@ trait AuthCacheWithSolr extends AuthCacheNotConfigured with DebugEnhancedLogging
     val q = new SolrQuery {
       set("q", query)
     }
-    Try { solrClient.deleteByQuery(q.getQuery) }
+    Try { solrClient.deleteByQuery(q.getQuery, commitWithinMs) }
       .flatMap(checkResponseStatus)
       .recoverWith {
         case t: HttpSolrClient.RemoteSolrException if isParseException(t) =>
