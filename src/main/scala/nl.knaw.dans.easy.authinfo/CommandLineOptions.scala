@@ -30,7 +30,14 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
     s"""
        |  $printedName get <item-id> # Retrieves the information from the cache or directly from the bag-store
        |  $printedName delete <solr-query> # Delete the selected item(s) from the SOLR index
-       |  $printedName run-service # Runs the program as a service""".stripMargin
+       |  $printedName run-service # Runs the program as a service
+       |
+       |  Some examples of standard solr queries for the delete command:
+       |
+       |    everything:                        '*'
+       |    all files of a particular user:    'easy_owner:<name>'
+       |    all files of a particular dataset: 'id:<bag-id>/*'
+       |""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
   banner(

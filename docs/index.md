@@ -10,6 +10,12 @@ SYNOPSIS
     easy-auth-info delete <solr-query> # Delete the selected item(s) from the SOLR index
     easy-auth-info run-service # Runs the program as a service
 
+    Some examples of standard solr queries for the delete command:
+
+      everything:                        '*'
+      all files of a particular user:    'easy_owner:<name>'
+      all files of a particular dataset: 'id:<bag-id>/*'
+
 
 DESCRIPTION
 -----------
