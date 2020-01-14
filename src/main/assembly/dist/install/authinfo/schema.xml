@@ -151,6 +151,8 @@
     <field name="easy_accessible_to" type="string" indexed="true" stored="true" required="true"/>
     <field name="easy_visible_to" type="string" indexed="true" stored="true" required="true"/>
     <field name="easy_date_available" type="string" indexed="true" stored="true" required="true" multiValued="false"/>
+    <field name="easy_license_key" type="string" indexed="true" stored="true" required="true" multiValued="false"/>
+    <field name="easy_license_title" type="string" indexed="true" stored="true" required="true" multiValued="false"/>
     <!-- End of EASY fields -->
 
     <!-- catchall field, containing all other searchable text fields (implemented

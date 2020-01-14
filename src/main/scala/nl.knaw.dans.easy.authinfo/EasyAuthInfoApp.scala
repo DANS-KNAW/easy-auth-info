@@ -19,6 +19,7 @@ import java.io.FileNotFoundException
 import java.nio.file.Path
 import java.util.UUID
 
+import nl.knaw.dans.easy.authinfo.Command.FeedBackMessage
 import nl.knaw.dans.easy.authinfo.components.{ FileItem, FileRights }
 import nl.knaw.dans.lib.encode.PathEncoding
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
@@ -44,8 +45,22 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
 
   /** @param fullPath <UUID>/<bag-relative-path> */
   def jsonAuthInfo(fullPath: Path): Try[String] = authInfo(fullPath).flatMap {
-    case Some(CachedAuthInfo(authInfo, _)) => Success(pretty(render(authInfo)))
+    case Some(CachedAuthInfo(authInfo, Some(Success(_)) | None)) => Success(pretty(render(authInfo)))
+    case Some(CachedAuthInfo(_, Some(Failure(e)))) => Failure(e)
     case None => Failure(new FileNotFoundException(fullPath.toString))
+  }
+
+  def delete(query: String): Try[FeedBackMessage] = {
+    logger.info(s"deleting documents with query '$query'")
+    for {
+      _ <- authCache.delete(query)
+      _ <- authCache.commit()
+    } yield s"Deleted documents with query '$query'"
+  } recoverWith {
+    case t: CacheCommitException => Failure(t)
+    case t =>
+      authCache.commit()
+      Failure(t)
   }
 
   /** @param fullPath <UUID>/<bag-relative-path> */
@@ -76,7 +91,10 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
         case None => Success(None) // TODO cache repeatedly requested but not found bags/files?
         case Some(filesXmlItem) =>
           collectInfo(bagId, path, filesXmlItem).map { fileItem =>
-            val cacheUpdate = authCache.submit(fileItem.solrLiterals)
+            val cacheUpdate = for {
+              cacheUpdate <- authCache.submit(fileItem.solrLiterals)
+              _ <- authCache.commit()
+            } yield cacheUpdate
             Some(CachedAuthInfo(fileItem.json, Some(cacheUpdate)))
           }
       }
@@ -86,7 +104,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
     for {
       ddm <- bagStore.loadDDM(bagId)
       ddmProfile <- getTag(ddm, "profile", bagId)
-      dcmiMetadata = getOptionalTag(ddm, "dcmiMetadata")
+      dcmiMetadata = (ddm \ "dcmiMetadata").headOption
       dateAvailable <- getTag(ddmProfile, "available", bagId).map(_.text)
       rights <- FileRights.get(ddmProfile, fileNode)
       license <- configuration.licenses.getLicense(dcmiMetadata, rights)
@@ -100,16 +118,12 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
       .recoverWith { case _ => Failure(InvalidBagException(s"<ddm:$tag> not found in $bagId/dataset.xml")) }
   }
 
-  private def getOptionalTag(node: Node, tag: String): Option[Node] = {
-    (node \ tag).headOption
-  }
-
   private def getDepositor(bagInfoMap: BagInfo, bagId: UUID): Try[String] = {
     Try(bagInfoMap("EASY-User-Account"))
       .recoverWith { case _ => Failure(InvalidBagException(s"'EASY-User-Account' (case sensitive) not found in $bagId/bag-info.txt")) }
   }
 
-  def getFileNode(xmlDoc: Elem, path: Path): Option[Node] = {
+  private def getFileNode(xmlDoc: Elem, path: Path): Option[Node] = {
     (xmlDoc \ "file").find(_
       .attribute("filepath")
       .map(_.text)

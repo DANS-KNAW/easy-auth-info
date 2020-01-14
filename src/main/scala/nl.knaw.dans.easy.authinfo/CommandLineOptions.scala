@@ -28,8 +28,16 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
   val description: String = s"""Provides consolidated authorization info about items in a bag store."""
   val synopsis: String =
     s"""
+       |  $printedName get <item-id> # Retrieves the information from the cache or directly from the bag-store
+       |  $printedName delete <solr-query> # Delete the selected item(s) from the SOLR index
        |  $printedName run-service # Runs the program as a service
-       |  $printedName <item-id> # Retrieves the information from the cache or directly from the bag-store""".stripMargin
+       |
+       |  Some examples of standard solr queries for the delete command:
+       |
+       |    everything:                        '*'
+       |    all files of a particular user:    'easy_owner:<name>'
+       |    all files of a particular dataset: 'id:<bag-id>/*'
+       |""".stripMargin
 
   version(s"$printedName v${ configuration.version }")
   banner(
@@ -43,15 +51,24 @@ class CommandLineOptions(args: Array[String], configuration: Configuration) exte
        |Options:
        |""".stripMargin)
 
-  val path: ScallopOption[Path] = trailArg[Path](name = "path", required = false)
-
-  //noinspection TypeAnnotation
-  val runService = new Subcommand("run-service") {
-    descr(
-      "Starts EASY Auth Info as a daemon that services HTTP requests")
+  val get = new Subcommand("get") {
+    descr("Retrieve the authorization info about the given item in a bagstore")
+    val itemId: ScallopOption[Path] = trailArg[Path](name = "itemId")
     footer(SUBCOMMAND_SEPARATOR)
   }
+  val delete = new Subcommand("delete") {
+    descr("Delete documents from the SOLR index")
+    val query: ScallopOption[String] = trailArg[String](name = "solr-query")
+    footer(SUBCOMMAND_SEPARATOR)
+  }
+  val runService = new Subcommand("run-service") {
+    descr("Starts EASY Auth Info as a daemon that services HTTP requests")
+    footer(SUBCOMMAND_SEPARATOR)
+  }
+  addSubcommand(get)
+  addSubcommand(delete)
   addSubcommand(runService)
 
   footer("")
+  verify()
 }

@@ -21,7 +21,7 @@ import org.apache.solr.common.SolrDocument
 
 import scala.util.{ Failure, Success, Try }
 
-trait AuthCacheNotConfigured {
+trait AuthCacheNotConfigured extends AutoCloseable {
 
   private val notImplemented = Failure(new NotImplementedError("no cache configured, assembling responses from bag store only"))
 
@@ -29,9 +29,11 @@ trait AuthCacheNotConfigured {
 
   def submit(cacheFields: CacheLiterals): Try[UpdateResponse] = notImplemented
 
+  def delete(query: String): Try[UpdateResponse] = notImplemented
+
   def commit(): Try[UpdateResponse] = notImplemented
 
-  def close(): Try[Unit] = Success(())
+  override def close(): Unit = ()
 }
 object AuthCacheNotConfigured {
   type CacheLiterals = Seq[(String, String)]

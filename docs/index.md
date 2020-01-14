@@ -6,8 +6,15 @@ easy-auth-info
 SYNOPSIS
 --------
 
+    easy-auth-info get <item-id> # Retrieves the information from the cache or directly from the bag-store
+    easy-auth-info delete <solr-query> # Delete the selected item(s) from the SOLR index
     easy-auth-info run-service # Runs the program as a service
-    easy-auth-info <item-id> # Retrieves the information from the cache or directly from the bag-store
+
+    Some examples of standard solr queries for the delete command:
+
+      everything:                        '*'
+      all files of a particular user:    'easy_owner:<name>'
+      all files of a particular dataset: 'id:<bag-id>/*'
 
 
 DESCRIPTION
@@ -18,11 +25,22 @@ Provides consolidated authorization info about items in a bag store.
 ARGUMENTS
 ---------
 
-     -h, --help      Show help message
-     -v, --version   Show version of this program
+      -h, --help      Show help message
+      -v, --version   Show version of this program
+    
+    Subcommand: get - Retrieve the authorization info about the given item in a bagstore
+      -h, --help   Show help message
     
      trailing arguments:
-      path (not required)
+      itemId (required)
+    ---
+    
+    Subcommand: delete - Delete documents from the SOLR index
+      -h, --help   Show help message
+    
+     trailing arguments:
+      solr-query (required)
+    ---
     
     Subcommand: run-service - Starts EASY Auth Info as a daemon that services HTTP requests
       -h, --help   Show help message

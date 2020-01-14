@@ -61,6 +61,9 @@ package object authinfo {
   case class CacheUpdateException(literals: CacheLiterals, cause: Throwable)
     extends Exception(s"solr update of [${ literals.toMap.mkString(", ") }] failed with ${ cause.getMessage }", cause)
 
+  case class CacheDeleteException(query: String, cause: Throwable)
+    extends Exception(s"solr delete [$query] failed with ${ cause.getMessage }", cause)
+
   case class CacheCommitException(cause: Throwable)
     extends Exception(cause.getMessage, cause)
 
