@@ -23,6 +23,7 @@ import nl.knaw.dans.easy.authinfo.Command.FeedBackMessage
 import nl.knaw.dans.easy.authinfo.components.{ FileItem, FileRights }
 import nl.knaw.dans.lib.encode.PathEncoding
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
+import nl.knaw.dans.lib.string._
 import org.json4s.native.JsonMethods.{ pretty, render }
 
 import scala.util.{ Failure, Success, Try }
@@ -78,7 +79,7 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
 
   /** @param fullPath <UUID>/<bag-relative-path> */
   private def extractUUID(fullPath: Path): Try[UUID] = {
-    Try(UUID.fromString(fullPath.getName(0).toString))
+    fullPath.getName(0).toString.toUUID.toTry
       .recoverWith { case t => Failure(new Exception(s"can't extract valid UUID from [$fullPath]", t)) }
   }
 

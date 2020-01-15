@@ -21,6 +21,7 @@ import java.util.UUID
 import nl.knaw.dans.lib.encode.PathEncoding
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import nl.knaw.dans.lib.logging.servlet._
+import nl.knaw.dans.lib.string._
 import org.eclipse.jetty.http.HttpStatus._
 import org.json4s.native.JsonMethods.{ pretty, render }
 import org.scalatra._
@@ -50,7 +51,7 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
   }
 
   private def getUUID: Try[UUID] = {
-    Try { UUID.fromString(params("uuid")) }
+    params("uuid").toUUID.toTry
   }
 
   private def getPath = Try {
