@@ -118,7 +118,7 @@ class ServletSpec extends TestSupportFixture with EmbeddedJettyContainer with Sc
   }
 
   it should "report invalid uuid" in {
-    shouldReturn(BAD_REQUEST_400, "Invalid UUID string: 1-2-3-4-5-6", whenRequesting = "1-2-3-4-5-6/some.file")
+    shouldReturn(BAD_REQUEST_400, "String '1-2-3-4-5-6' is not a UUID", whenRequesting = "1-2-3-4-5-6/some.file")
   }
 
   it should "report missing path" in {
