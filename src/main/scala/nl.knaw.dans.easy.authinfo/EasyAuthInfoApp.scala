@@ -79,10 +79,9 @@ trait EasyAuthInfoApp extends AutoCloseable with DebugEnhancedLogging with Appli
 
   /** @param fullPath <UUID>/<bag-relative-path> */
   private def extractUUID(fullPath: Path): Try[UUID] = {
-    Try { fullPath.getName(0).toString } match {
-      case Success(name) => name.toUUID.toTry
-      case t => Failure(new Exception(s"can't extract valid UUID from [$fullPath]"))
-    }
+    Try { fullPath.getName(0).toString }
+      .recoverWith { case e => Failure(new Exception(s"can't extract valid UUID from [$fullPath]", e)) }
+      .flatMap(_.toUUID.toTry)
   }
 
   private def fromBagStore(bagId: UUID, path: Path): Try[Option[CachedAuthInfo]] = {
