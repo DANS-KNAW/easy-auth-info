@@ -18,6 +18,7 @@ package nl.knaw.dans.easy
 import java.util.UUID
 
 import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiterals
+import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.solr.client.solrj.response.UpdateResponse
 import org.apache.solr.common.util.NamedList
 import org.json4s.JsonAST.JValue
@@ -25,7 +26,7 @@ import org.json4s.JsonAST.JValue
 import scala.util.Try
 import scalaj.http.HttpResponse
 
-package object authinfo {
+package object authinfo extends DebugEnhancedLogging {
 
   type BagInfo = Map[String, String]
 
@@ -68,4 +69,8 @@ package object authinfo {
     extends Exception(cause.getMessage, cause)
 
   case class InvalidBagException(message: String) extends Exception(message)
+
+  case class ServiceNotAvailableException(service: String, cause: Throwable) extends Exception(cause.getMessage, cause) {
+    logger.warn(s"Service $service is not available")
+  }
 }
