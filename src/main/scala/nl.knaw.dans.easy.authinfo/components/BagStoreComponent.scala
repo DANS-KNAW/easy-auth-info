@@ -64,9 +64,7 @@ trait BagStoreComponent extends DebugEnhancedLogging {
         _ <- if (response.isSuccess) Success(())
              else Failure(HttpStatusException(url.toString, response))
       } yield XML.loadString(response.body)
-    }.recoverWith {
-      case e: ConnectException => Failure(ServiceNotAvailableException(serviceName, e))
-    }
+    }.recoverWith(recoverFromBagStoreError)
 
     private def loadBagInfo(url: URL): Try[BagInfo] = {
       for {
@@ -80,7 +78,9 @@ trait BagStoreComponent extends DebugEnhancedLogging {
           val Array(k, v) = line.split(":", 2)
           (k.trim, v.trim)
         }.toMap
-    }.recoverWith {
+    }.recoverWith(recoverFromBagStoreError)
+    
+    private def recoverFromBagStoreError[U]: PartialFunction[Throwable, Try[U]] = {
       case e: ConnectException => Failure(ServiceNotAvailableException(serviceName, e))
     }
 
