@@ -15,12 +15,12 @@
  */
 package nl.knaw.dans.easy.authinfo.components
 
-import java.net.{ URI, URL }
+import java.net.{ ConnectException, URI, URL }
 import java.nio.file.Paths
 import java.util.UUID
 
 import nl.knaw.dans.lib.encode.PathEncoding
-import nl.knaw.dans.easy.authinfo.{ BagDoesNotExistException, BagInfo, HttpStatusException }
+import nl.knaw.dans.easy.authinfo.{ BagDoesNotExistException, BagInfo, HttpStatusException, ServiceNotAvailableException }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import scalaj.http.HttpResponse
 
@@ -37,6 +37,7 @@ trait BagStoreComponent extends DebugEnhancedLogging {
     val connTimeout: Int
     val readTimeout: Int
 
+    private val serviceName = "easy-bag-store"
     private val bagNotFoundMessageRegex = ".*Bag [0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12} does not exist in BagStore.*"
 
     def loadDDM(bagId: UUID): Try[Elem] = {
@@ -63,6 +64,8 @@ trait BagStoreComponent extends DebugEnhancedLogging {
         _ <- if (response.isSuccess) Success(())
              else Failure(HttpStatusException(url.toString, response))
       } yield XML.loadString(response.body)
+    }.recoverWith {
+      case e: ConnectException => Failure(ServiceNotAvailableException(serviceName, e))
     }
 
     private def loadBagInfo(url: URL): Try[BagInfo] = {
@@ -77,6 +80,8 @@ trait BagStoreComponent extends DebugEnhancedLogging {
           val Array(k, v) = line.split(":", 2)
           (k.trim, v.trim)
         }.toMap
+    }.recoverWith {
+      case e: ConnectException => Failure(ServiceNotAvailableException(serviceName, e))
     }
 
     private def toURL(bagId: UUID, path: String): Try[URL] = Try {
