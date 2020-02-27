@@ -71,6 +71,7 @@ class EasyAuthInfoServlet(app: EasyAuthInfoApp) extends ScalatraServlet
         Ok(pretty(render(json)))
       case Success(None) => NotFound(s"$uuid/${path.escapePath} does not exist")
       case Failure(HttpStatusException(message, HttpResponse(_, SERVICE_UNAVAILABLE_503, _))) => ServiceUnavailable(message)
+      case Failure(ServiceNotAvailableException(_, e)) => ServiceUnavailable(e.getMessage)
       case Failure(BagDoesNotExistException(uuid: UUID)) => NotFound(s"$uuid/${path.escapePath} does not exist")
       case Failure(t: InvalidBagException) =>
         logger.error(s"[$uuid] invalid bag: ${ t.getMessage }")
