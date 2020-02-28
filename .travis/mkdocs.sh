@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2017 DANS - Data Archiving and Networked Services (info@dans.knaw.nl)
+# Copyright (C) 2016 DANS - Data Archiving and Networked Services (info@dans.knaw.nl)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ set -e
 GH_REPO=$(basename $TRAVIS_BUILD_DIR)
 REMOTE="https://${GH_TOKEN}@github.com/${GH_ORG}/${GH_REPO}"
 git remote set-url origin ${REMOTE}
+
+pip install -r .travis/requirements.txt
 
 echo "START installing DANS mkdocs theme..."
 git clone https://github.com/Dans-labs/mkdocs-dans $HOME/mkdocs-dans
