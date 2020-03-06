@@ -108,13 +108,8 @@
             <artifactId>guava</artifactId>
         </dependency>
         <dependency>
-            <!--
-            TODO move dependency to dans-prototype once the other SOLR is upgraded from v3 to v6
-            currently this gives too many problems in the inheritance to easy-app/easy-webui
-            -->
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-solrj</artifactId>
-            <version>6.6.0</version>
         </dependency>
     </dependencies>
     <repositories>
