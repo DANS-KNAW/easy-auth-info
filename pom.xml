@@ -20,7 +20,7 @@
     <parent>
         <groupId>nl.knaw.dans.shared</groupId>
         <artifactId>dans-scala-app-project</artifactId>
-        <version>5.1.6</version>
+        <version>6.0.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>nl.knaw.dans.easy</groupId>
@@ -62,7 +62,6 @@
         <dependency>
             <groupId>nl.knaw.dans.lib</groupId>
             <artifactId>dans-scala-lib_2.12</artifactId>
-            <version>1.6.1</version>
         </dependency>
         <dependency>
             <groupId>org.scalaj</groupId>
@@ -91,7 +90,6 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.scalatra</groupId>
@@ -108,16 +106,10 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>20.0</version>
         </dependency>
         <dependency>
-            <!--
-            TODO move dependency to dans-prototype once the other SOLR is upgraded from v3 to v6
-            currently this gives too many problems in the inheritance to easy-app/easy-webui
-            -->
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-solrj</artifactId>
-            <version>6.6.0</version>
         </dependency>
     </dependencies>
     <repositories>
