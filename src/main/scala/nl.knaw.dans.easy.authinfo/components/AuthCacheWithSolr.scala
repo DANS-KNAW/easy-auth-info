@@ -19,7 +19,7 @@ import nl.knaw.dans.easy.authinfo.components.AuthCacheNotConfigured.CacheLiteral
 import nl.knaw.dans.easy.authinfo.{ CacheBadRequestException, CacheDeleteException, CacheSearchException, CacheStatusException, CacheUpdateException }
 import nl.knaw.dans.lib.logging.DebugEnhancedLogging
 import org.apache.http.HttpStatus._
-import org.apache.solr.client.solrj.impl.HttpSolrClient
+import org.apache.solr.client.solrj.impl.{ BaseHttpSolrClient, HttpSolrClient }
 import org.apache.solr.client.solrj.response.{ SolrResponseBase, UpdateResponse }
 import org.apache.solr.client.solrj.{ SolrClient, SolrQuery }
 import org.apache.solr.common.{ SolrDocument, SolrInputDocument }
@@ -82,7 +82,7 @@ trait AuthCacheWithSolr extends AuthCacheNotConfigured with DebugEnhancedLogging
     solrClient.close()
   }
 
-  private def isParseException(t: HttpSolrClient.RemoteSolrException) = {
+  private def isParseException(t: BaseHttpSolrClient.RemoteSolrException) = {
     t.getRootThrowable.endsWith("ParseException")
   }
 
