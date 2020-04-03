@@ -26,11 +26,13 @@ import org.apache.solr.client.solrj.SolrClient
 import org.json4s
 import org.json4s.native.JsonMethods.parse
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{ BeforeAndAfterEach, FlatSpec, Inside, Matchers }
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{ BeforeAndAfterEach, Inside }
 
 import scala.collection.immutable.HashMap
 
-trait TestSupportFixture extends FlatSpec with Matchers with Inside with BeforeAndAfterEach with MockFactory {
+trait TestSupportFixture extends AnyFlatSpec with Matchers with Inside with BeforeAndAfterEach with MockFactory {
 
   lazy val testDir: Path = {
     val path = Paths.get(s"target/test/${ getClass.getSimpleName }").toAbsolutePath
