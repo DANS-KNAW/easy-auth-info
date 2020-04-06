@@ -25,7 +25,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>nl.knaw.dans.easy</groupId>
     <artifactId>easy-auth-info</artifactId>
-    <version>1.2.2-SNAPSHOT</version>
+    <version>1.2.2</version>
     <name>EASY Auth Info</name>
     <url>https://github.com/DANS-KNAW/easy-auth-info</url>
     <description>Provides consolidated authorization info about items in a bag store.</description>
@@ -36,7 +36,7 @@
     </properties>
     <scm>
         <developerConnection>scm:git:https://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v1.2.2</tag>
     </scm>
     <dependencies>
         <dependency>
