@@ -33,7 +33,7 @@ import nl.knaw.dans.lib.encode._
 case class FileItem(id: UUID, path: Path, owner: String, rights: FileRights, dateAvailable: String, license: License) extends DebugEnhancedLogging {
 
   val solrLiterals: CacheLiterals = Seq(
-    ("id", s"$id/${path.escapePath}"),
+    ("id", s"$id/${ path.escapePath }"),
     ("easy_owner", owner),
     ("easy_date_available", dateAvailable),
     ("easy_accessible_to", rights.accessibleTo.toString),
@@ -59,12 +59,11 @@ object FileItem {
   private def solr2jsonKey(key: String): String = solr2JsonKeys.getOrElse(key, key)
 
   def toJson(solrDocument: SolrDocument): JsonAST.JObject = {
-    val fieldValueMap = solrDocument.getFieldValueMap
-    fieldValueMap
+    solrDocument.getFieldValueMap
       .keySet()
       .asScala // asScala on the map throws UnsupportedOperationException
       .filter(_.matches("(id|easy_.*)")) // filter on the solr query would spread knowledge
-      .map(key => (solr2jsonKey(key), fieldValueMap.get(key).toString))
+      .map(key => (solr2jsonKey(key), solrDocument.getFieldValueMap.get(key).toString))
       .foldLeft(JObject())(_ ~ _)
   }
 }
