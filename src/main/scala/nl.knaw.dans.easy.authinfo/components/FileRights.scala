@@ -23,6 +23,7 @@ import scala.xml.Node
 
 case class FileRights(accessibleTo: String, visibleTo: String)
 object FileRights {
+  private val allowedValues = RightsFor.values.map(_.toString)
 
   def get(ddmProfile: Node, fileNode: Node): Try[FileRights] = {
     // see ddm.xsd EasyAccessCategoryType
